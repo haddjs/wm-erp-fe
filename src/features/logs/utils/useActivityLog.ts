@@ -15,7 +15,7 @@ export function useActivityLogs(page = 1, limit = 10) {
     setLoading(true);
     getActivityLogs(page, limit)
       .then((res) => {
-        setLogs(res.data);
+        setLogs(res.data ?? []);
         setPaging(res.paging);
       })
       .catch((err) => setError(err?.message || "Failed to load logs"))

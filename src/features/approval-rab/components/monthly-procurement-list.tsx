@@ -27,7 +27,7 @@ export default function MonthlyProcurementList({
     const loadBranches = async () => {
       try {
         const data = await getBranches();
-        setBranches(data.data);
+        setBranches(data.data ?? []);
         if (data.data.length > 0) {
           setSelectedBranchId(data.data[0].id);
         } else {

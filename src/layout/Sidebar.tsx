@@ -24,7 +24,7 @@ const Sidebar = () => {
   };
 
   const sidebarItems = user
-    ? SIDEBAR_ITEMS.filter((item) => item.roles.includes(user.role))
+    ? (SIDEBAR_ITEMS.filter ?? [])((item) => item.roles.includes(user.role))
     : [];
 
   return (

@@ -20,8 +20,8 @@ export function useExpenses(page = 1, limit = 10) {
     setLoading(true);
     getExpenses(page, limit)
       .then((res) => {
-        setExpenses(res.data);
-        setPaging(res.paging);
+        setExpenses(res.data ?? []);
+        setPaging(res.paging ?? []);
       })
       .catch((err) => setError(err?.message || "Failed to load expenses"))
       .finally(() => setLoading(false));

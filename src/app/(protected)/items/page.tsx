@@ -56,8 +56,8 @@ export default function ItemsPage() {
         getItems({ limit: 100 }),
         getCategories({ limit: 100 }),
       ]);
-      setItems(itemsRes.data);
-      setCategories(categoriesRes.data);
+      setItems(itemsRes.data ?? []);
+      setCategories(categoriesRes.data ?? []);
     } catch (error) {
       console.error("Failed to fetch data:", error);
       toast.error("Failed to load items");
@@ -138,7 +138,7 @@ export default function ItemsPage() {
     }
   };
 
-  const filteredItems = items.filter((item) => {
+  const filteredItems = (items ?? []).filter((item) => {
     const matchesCategory =
       selectedCategory === "ALL" || item.category_id === selectedCategory;
     const matchesSearch =
@@ -151,7 +151,9 @@ export default function ItemsPage() {
   const itemsByCategory = (categories ?? [])
     .map((category) => ({
       ...category,
-      items: filteredItems.filter((item) => item.category_id === category.id),
+      items: (filteredItems ?? []).filter(
+        (item) => item.category_id === category.id,
+      ),
     }))
     .filter((group) => group.items.length > 0);
 

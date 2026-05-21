@@ -6,5 +6,5 @@ export function useFilteredSidebar() {
 
   if (!user) return [];
 
-  return SIDEBAR_ITEMS.filter((item) => item.roles.includes(user.role));
+  return (SIDEBAR_ITEMS.filter ?? [])((item) => item.roles.includes(user.role));
 }

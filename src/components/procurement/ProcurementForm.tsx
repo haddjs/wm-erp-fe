@@ -101,9 +101,9 @@ export const ProcurementForm = ({
         getCategories({ limit: 100 }),
         getItems({ limit: 100 }),
       ]);
-      setBranches(branchesData.data);
-      setCategories(categoriesData.data);
-      setItemsList(itemsData.data);
+      setBranches(branchesData.data ?? []);
+      setCategories(categoriesData.data ?? []);
+      setItemsList(itemsData.data ?? []);
     } catch (error) {
       console.error("Failed to fetch data:", error);
       toast.error("Failed to load form data");

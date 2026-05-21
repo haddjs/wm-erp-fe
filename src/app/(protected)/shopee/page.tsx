@@ -126,7 +126,7 @@ function ImportResultView({ result }: { result: ShopeeImportResult }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50 dark:divide-zinc-900">
-            {result.reconciliation.map((rec) => (
+            {(result.reconciliation ?? []).map((rec) => (
               <tr
                 key={rec.order_id}
                 className="hover:bg-slate-50/30 dark:hover:bg-zinc-900/20"

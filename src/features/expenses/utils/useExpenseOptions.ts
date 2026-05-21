@@ -14,8 +14,8 @@ export function useExpenseOptions() {
   useEffect(() => {
     Promise.all([getBranches(), getItems()])
       .then(([branchRes, itemRes]) => {
-        setBranches(branchRes.data);
-        setItems(itemRes.data);
+        setBranches(branchRes.data ?? []);
+        setItems(itemRes.data ?? []);
       })
       .finally(() => setLoading(false));
   }, []);

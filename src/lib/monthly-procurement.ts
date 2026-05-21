@@ -15,7 +15,7 @@ export async function getMonthlyProcurements(params: {
   if (params.limit) searchParams.append("limit", params.limit.toString());
   const url = `/monthly-procurements?${searchParams.toString()}`;
   const res = await apiFetch(url);
-  return res.data;
+  return res.data ?? [];
 }
 
 export async function getMonthlyProcurementById(
@@ -24,7 +24,7 @@ export async function getMonthlyProcurementById(
   const res = await apiFetch(`/monthly-procurements/${id}`);
   return {
     ...res.data,
-    items: res.data.procurement_items,
+    items: res.data.procurement_items ?? [],
   };
 }
 

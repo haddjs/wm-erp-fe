@@ -1,4 +1,10 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+if (!BASE_URL) {
+  console.error(
+    "[api] NEXT_PUBLIC_API_URL is not defined. All API requests will fail. " +
+      "Check your .env.production file.",
+  );
+}
 
 let isRefreshing = false;
 let failedQueue: Array<{
@@ -31,6 +37,7 @@ export async function apiFetch(
   let accessToken = getAccessToken();
 
   const makeRequest = async (customToken?: string): Promise<any> => {
+    if (!BASE_URL) throw new Error("NEXT_PUBLIC_API_URL is not configured");
     const isFormData = options.body instanceof FormData;
 
     const headers: HeadersInit = {
@@ -92,7 +99,11 @@ export async function apiFetch(
 }
 
 async function refreshAccessToken(): Promise<string> {
+  if (typeof window === "undefined")
+    throw new Error("Cannot refresh token on server");
+
   const refresh_token = localStorage.getItem("refresh_token");
+  if (!refresh_token) throw new Error("No refresh token");
 
   if (!refresh_token) {
     throw new Error("No refresh token");

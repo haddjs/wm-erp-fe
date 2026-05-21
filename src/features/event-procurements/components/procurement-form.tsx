@@ -65,7 +65,7 @@ export default function ProcurementForm({
 
   useEffect(() => {
     if (currentItem.category_id) {
-      const filtered = items.filter(
+      const filtered = (items ?? []).filter(
         (item) => item.category_id === currentItem.category_id,
       );
       setFilteredItems(filtered);
@@ -82,9 +82,9 @@ export default function ProcurementForm({
         getCategories({ limit: 100 }),
         getItems({ limit: 100 }),
       ]);
-      setBranches(branchesData.data);
-      setCategories(categoriesData.data);
-      setItems(itemsData.data);
+      setBranches(branchesData.data ?? []);
+      setCategories(categoriesData.data ?? []);
+      setItems(itemsData.data ?? []);
     } catch (error) {
       console.error("Failed to fetch master data:", error);
     } finally {
@@ -149,7 +149,7 @@ export default function ProcurementForm({
   const removeItem = (index: number) => {
     setFormData({
       ...formData,
-      items: formData.items.filter((_, i) => i !== index),
+      items: (formData.items ?? []).filter((_, i) => i !== index),
     });
   };
 

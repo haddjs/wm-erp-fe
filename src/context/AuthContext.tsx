@@ -70,7 +70,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (isAuthenticated()) {
         try {
           const res = await getUserProfile();
-          setUser({ ...res.data, role: ROLE_MAP[res.data.role] ?? 1 });
+          const mappedRole = ROLE_MAP[res.data.role];
+          if (!mappedRole) {
+            clearAuthData();
+            throw new Error(`Unknown role: ${res.data.role}`);
+          }
+          setUser({ ...res.data, role: mappedRole });
         } catch (error) {
           console.error("Failed to load user:", error);
           clearAuthData();
@@ -84,7 +89,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     await apiLogin({ email, password });
     const userRes = await getUserProfile();
-    setUser({ ...userRes.data, role: ROLE_MAP[userRes.data.role] ?? 1 });
+    const mappedRole = ROLE_MAP[userRes.data.role];
+    if (!mappedRole) {
+      clearAuthData();
+      throw new Error(`Unknown role: ${userRes.data.role}`);
+    }
+    setUser({ ...userRes.data, role: mappedRole });
   };
 
   const logout = async () => {
