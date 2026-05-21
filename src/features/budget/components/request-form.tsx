@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { getBranch } from "@/lib/branch";
+import { getBranches } from "@/lib/branch";
 import { useRequest } from "../hooks/useRequest";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +38,7 @@ interface FormItem {
   itemName: string;
   quantity: number;
   unit: string;
-  unitPrice: string; // Kept as string for easier input handling
+  unitPrice: string;
   total: number;
 }
 
@@ -87,8 +87,8 @@ const RequestForm = () => {
   useEffect(() => {
     const fetchBranches = async () => {
       try {
-        const data = await getBranch();
-        setBranches(data);
+        const data = await getBranches();
+        setBranches(data.data);
       } catch (error) {
         console.error(error);
         toast.error("Failed to load branches");
