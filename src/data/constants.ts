@@ -29,6 +29,12 @@ export const LOG_ACTION = {
   monthly_procurement_status_changed: { label: "Monthly Procurement Updated" },
   event_procurement_created: { label: "Event Procurement Created" },
   event_procurement_status_changed: { label: "Event Procurement Updated" },
+  request_created: { label: "Request Created" },
+  request_approved: { label: "Request Approved" },
+  request_rejected: { label: "Request Rejected" },
+  request_cancelled: { label: "Request Cancelled" },
+  request_status_changed: { label: "Request Status Changed" },
+  user_action: { label: "User Action" },
 } as const;
 
 export type ActionType = keyof typeof LOG_ACTION;
