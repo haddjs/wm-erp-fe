@@ -1,0 +1,13 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wm-erp-frontend
+    restart: unless-stopped
+    networks:
+      - wm-erp-network
+
+networks:
+  wm-erp-network:
+    external: true
