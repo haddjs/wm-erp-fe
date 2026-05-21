@@ -1,64 +1,40 @@
-// import { useState } from "react";
-// import { apiFetch } from "@/lib/api";
-// import { useAuth } from "@/context/AuthContext";
+"use client";
 
-// export const useActivityLog = () => {
-//   const { accessToken } = useAuth();
-//   const [loading, setLoading] = useState(false);
+import { useEffect, useState } from "react";
+import { getActivityLogs } from "@/lib/log";
+import { ActivityLogResponse, ActivityLogPaging } from "@/types/activity-log";
+import { LogConfig, LOG_CONFIG } from "@/data/constants";
 
-//   const getLogs = async (page = 1, limit = 10) => {
-//     try {
-//       setLoading(true);
+export function useActivityLogs(page = 1, limit = 10) {
+  const [logs, setLogs] = useState<ActivityLogResponse[]>([]);
+  const [paging, setPaging] = useState<ActivityLogPaging | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-//       const res = await apiFetch(
-//         `/activity-logs?page=${page}&limit=${limit}`,
-//         {},
-//         accessToken || undefined,
-//       );
+  useEffect(() => {
+    setLoading(true);
+    getActivityLogs(page, limit)
+      .then((res) => {
+        setLogs(res.data);
+        setPaging(res.paging);
+      })
+      .catch((err) => setError(err?.message || "Failed to load logs"))
+      .finally(() => setLoading(false));
+  }, [page, limit]);
 
-//       return res;
-//     } catch (error) {
-//       throw error;
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
+  return { logs, paging, loading, error };
+}
 
-//   return { getLogs, loading };
-// };
+export function getLogConfig(type: string): LogConfig | null {
+  return LOG_CONFIG[type] ?? null;
+}
 
-// features/logs/utils/useActivityLog.ts (simplified - no longer needed, but keep for compatibility)
-import { useState } from "react";
-import { getMockActivityLogs } from "@/mocks/activity-logs";
+export function formatTimestamp(timestamp: string): string {
+  const date = new Date(timestamp);
 
-export const useActivityLog = () => {
-  const [loading, setLoading] = useState(false);
-
-  const getLogs = async (page = 1, limit = 10) => {
-    try {
-      setLoading(true);
-
-      // Simulate network delay
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      const allLogs = getMockActivityLogs();
-      const start = (page - 1) * limit;
-      const end = start + limit;
-
-      return {
-        success: true,
-        data: allLogs.slice(start, end),
-        pagination: {
-          page,
-          limit,
-          total: allLogs.length,
-          totalPages: Math.ceil(allLogs.length / limit),
-        },
-      };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return { getLogs, loading };
-};
+  return date.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}

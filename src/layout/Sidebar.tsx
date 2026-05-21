@@ -1,98 +1,148 @@
 "use client";
 
-import { LogOut, Menu } from "lucide-react";
+import { LogOut, Menu, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
 import { useState } from "react";
-
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
-import { SIDEBAR_ITEMS } from "@/data/constants";
-import { useAuth } from "@/context/AuthContext";
+import { getSidebarItemsByRole } from "@/mocks/sidebarItems";
+import { SIDEBAR_ITEMS } from "@/config/user";
+import { useAuth } from "@/mocks/user";
 
 const Sidebar = () => {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const handleLogout = async () => {
     await logout();
     router.push("/login");
   };
 
+  const sidebarItems = SIDEBAR_ITEMS.filter((item) =>
+    item.roles.includes(user?.role),
+  );
+
   return (
     <aside
-      className={`bg-white border-r border-gray-200 transition-all duration-300 ${isCollapsed ? "w-16" : "w-60"}`}
+      className={cn(
+        "relative flex flex-col border-r bg-slate-50/50 transition-all duration-300 ease-in-out",
+        isCollapsed ? "w-18" : "w-64",
+      )}
     >
-      <div className="flex flex-col h-screen">
-        {/* Header */}
-        <div className="p-4 border-b border-gray-200 flex items-center">
-          {!isCollapsed && (
-            <div className="flex items-center gap-5">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="absolute -right-3 top-10 z-50 h-6 w-6 rounded-full border bg-white shadow-sm hover:bg-gray-100"
+      >
+        <ChevronLeft
+          className={cn(
+            "h-4 w-4 transition-transform",
+            isCollapsed && "rotate-180",
+          )}
+        />
+      </Button>
+
+      <div className="flex h-screen flex-col">
+        {/* Header Section */}
+        <div className="flex h-20 items-center px-4 py-6">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <div className="shrink-0 rounded-xl bg-blue-600 p-2">
               <Image
                 src="/wm-blue.svg"
-                alt="FinanceHub Logo"
-                width={64}
-                height={64}
+                alt="Logo"
+                width={24}
+                height={24}
+                className="brightness-0 invert"
               />
-              <div>
-                <h1 className="font-semibold text-gray-900">FinanceHub</h1>
-                <p className="text-xs text-gray-500">Budget Tracker</p>
-              </div>
             </div>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="h-8 w-8 p-0"
-          >
-            <Menu className="w-4 h-4" />
-          </Button>
+            {!isCollapsed && (
+              <div className="flex flex-col whitespace-nowrap">
+                <span className="text-sm font-bold tracking-tight text-slate-900">
+                  FinanceHub
+                </span>
+                <span className="text-[10px] font-medium uppercase text-slate-500">
+                  Budget Tracker
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex flex-col gap-2 p-3 space-y-1">
-          {SIDEBAR_ITEMS.map((item) => {
+        {/* Navigation Section */}
+        <nav className="flex-1 space-y-1 px-3 py-4">
+          {sidebarItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.path;
 
             return (
-              <Link key={item.path} href={item.path}>
-                <Button
-                  variant={isActive ? "secondary" : "ghost"}
-                  className={`w-full justify-start gap-3 ${isCollapsed ? "" : "p-5"}`}
+              <Link key={item.path} href={item.path} className="block">
+                <div
+                  className={cn(
+                    "group flex items-center rounded-lg px-3 py-2.5 transition-all duration-200",
+                    isActive
+                      ? "bg-white text-blue-600 shadow-sm ring-1 ring-slate-200"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+                  )}
                 >
                   <Icon
-                    className={`w-5 h-5 ${isActive ? "text-blue-600" : "text-gray-600"}`}
+                    className={cn(
+                      "h-5 w-5 shrink-0 transition-colors",
+                      isActive
+                        ? "text-blue-600"
+                        : "text-slate-500 group-hover:text-slate-900",
+                    )}
                   />
                   {!isCollapsed && (
-                    <span
-                      className={`text-sm
-                        ${isActive ? "text-gray-900 font-medium" : "text-gray-600"}
-                      `}
-                    >
+                    <span className="ml-3 text-sm font-medium transition-opacity duration-300">
                       {item.label}
                     </span>
                   )}
-                </Button>
+                  {isActive && !isCollapsed && (
+                    <div className="ml-auto h-1.5 w-1.5 rounded-full bg-blue-600" />
+                  )}
+                </div>
               </Link>
             );
           })}
         </nav>
 
-        <div className="p-3 border-t border-gray-200">
+        {/* Footer / User Section */}
+        <div className="border-t border-slate-200 p-4">
           <Button
             variant="ghost"
-            className={`w-full justify-start gap-3 ${isCollapsed ? "" : "p-5"}`}
             onClick={handleLogout}
+            className={cn(
+              "w-full text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors",
+              isCollapsed ? "justify-center px-0" : "justify-start gap-3 px-3",
+            )}
           >
-            <LogOut className="w-5 h-5 text-gray-600" />
-            {!isCollapsed && <span className="text-gray-600">Logout</span>}
+            <LogOut className="h-5 w-5" />
+            {!isCollapsed && (
+              <span className="text-sm font-medium">Logout</span>
+            )}
           </Button>
+
+          {!isCollapsed && user && (
+            <div className="mt-4 flex items-center gap-3 rounded-lg border bg-white p-2 shadow-sm">
+              <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">
+                {user.name?.charAt(0) || "U"}
+              </div>
+              <div className="flex flex-col overflow-hidden">
+                <span className="truncate text-xs font-semibold text-slate-900">
+                  {user.name}
+                </span>
+                <span className="truncate text-[10px] text-slate-500 capitalize">
+                  {user.role}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </aside>
