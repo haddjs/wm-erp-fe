@@ -26,7 +26,7 @@ export function usePurchaseReadyItems(type: "monthly" | "event") {
         const procurements: MonthlyProcurement[] = await getMonthlyProcurements(
           { page: 1, limit: 100 },
         );
-        const approved = procurements.filter(
+        const approved = (procurements ?? []).filter(
           (p) => p.status === "approved" || p.status === "partial",
         );
         for (const p of approved) {
@@ -48,7 +48,7 @@ export function usePurchaseReadyItems(type: "monthly" | "event") {
           page: 1,
           limit: 100,
         });
-        const approved = procurements.filter(
+        const approved = (procurements ?? []).filter(
           (p) => p.status === "approved" || p.status === "disburse",
         );
         for (const p of approved) {

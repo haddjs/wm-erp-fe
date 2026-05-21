@@ -27,9 +27,10 @@ export default function MonthlyProcurementList({
     const loadBranches = async () => {
       try {
         const data = await getBranches();
-        setBranches(data.data ?? []);
-        if (data.data.length > 0) {
-          setSelectedBranchId(data.data[0].id);
+        const branches = data.data ?? [];
+        setBranches(branches);
+        if (branches.length > 0) {
+          setSelectedBranchId(branches[0].id);
         } else {
           setLoading(false);
           setError("No branches found");
@@ -60,7 +61,7 @@ export default function MonthlyProcurementList({
       const procurementsData = await getMonthlyProcurements({
         branch_id: selectedBranchId,
       });
-      setProcurements(procurementsData);
+      setProcurements(procurementsData ?? []);
     } catch (err: any) {
       console.error("Failed to fetch procurements:", err);
       setError(err.message || "Failed to load procurements");

@@ -66,7 +66,7 @@ export default function PurchaseRecordReview({
     setLoading(true);
     try {
       const res = await getPurchaseRecordsByItemId(procurementItemId);
-      setRecords(res.data);
+      setRecords(res.data ?? []);
     } catch (error) {
       console.error("Failed to fetch purchase records:", error);
     } finally {

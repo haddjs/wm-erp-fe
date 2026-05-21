@@ -8,7 +8,7 @@ import {
 } from "@/lib/purchase-record";
 import type { PurchaseReadyItem } from "@/types/purchase-ready-item";
 import type { PurchaseRecord } from "@/types/purchase-record";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth, ROLES } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -51,8 +51,8 @@ export default function PurchaseRecordPanel({
   const [rejectTarget, setRejectTarget] = useState<PurchaseRecord | null>(null);
   const [rejectNotes, setRejectNotes] = useState("");
 
-  const canRecord = user?.role === 1 || user?.role === 2;
-  const canReview = user?.role === 1 || user?.role === 3;
+  const canRecord = user?.role === ROLES.ADMIN || user?.role === ROLES.GA;
+  const canReview = user?.role === ROLES.ADMIN || user?.role === ROLES.FINANCE;
 
   const [formData, setFormData] = useState({
     quantity_bought: item.quantity,
@@ -73,13 +73,14 @@ export default function PurchaseRecordPanel({
       notes: "",
     });
     setShowForm(false);
-  }, [item.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.id, item.quantity, item.unit_price]);
 
   const fetchRecords = async () => {
     setLoadingRecords(true);
     try {
       const res = await getPurchaseRecordsByItemId(item.id);
-      setRecords(res.data);
+      setRecords(res.data ?? []);
     } catch (err) {
       console.error("Failed to fetch records:", err);
     } finally {
@@ -126,7 +127,7 @@ export default function PurchaseRecordPanel({
     if (!rejectTarget) return;
     setUpdating(rejectTarget.id);
     try {
-      await updatePurchaseRecordStatus(rejectTarget.id, "rejected");
+      await updatePurchaseRecordStatus(rejectTarget.id, "rejected", rejectNotes.trim() || undefined);
       await fetchRecords();
     } catch {
       alert("Failed to reject purchase record.");
@@ -154,7 +155,11 @@ export default function PurchaseRecordPanel({
         label: "Rejected",
         className: "bg-red-50 text-red-700 border-red-200",
       },
-    }[status];
+    }[status] ?? {
+      icon: Clock,
+      label: status,
+      className: "bg-gray-50 text-gray-600 border-gray-200",
+    };
     const Icon = config.icon;
     return (
       <span
