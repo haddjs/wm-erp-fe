@@ -56,7 +56,7 @@ export default function ItemsPage() {
         getItems({ limit: 100 }),
         getCategories({ limit: 100 }),
       ]);
-      setItems(itemsRes.data ?? []);
+      setItems(itemsRes.data);
       setCategories(categoriesRes.data ?? []);
     } catch (error) {
       console.error("Failed to fetch data:", error);

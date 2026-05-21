@@ -134,7 +134,7 @@ export const RequestForm = ({
       alert("Minimal harus ada 1 item");
       return;
     }
-    setItems(items.filter((item) => item.id !== id));
+    setItems((items ?? []).filter((item) => item.id !== id));
   };
 
   const calculateGrandTotal = () => {

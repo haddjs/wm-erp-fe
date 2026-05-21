@@ -47,7 +47,7 @@ export default function MonthlyProcurementPage() {
   };
 
   const handleRemoveItem = (id: string) => {
-    setItems(items.filter((item) => item.id !== id));
+    setItems((items ?? []).filter((item) => item.id !== id));
     toast.info("Item removed");
   };
 

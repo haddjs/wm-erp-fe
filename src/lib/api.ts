@@ -98,6 +98,14 @@ export async function apiFetch(
   return makeRequest();
 }
 
+export async function apiFetchList<T>(
+  url: string,
+  options: RequestInit = {},
+): Promise<T[]> {
+  const res = await apiFetch(url, options);
+  return res?.data ?? [];
+}
+
 async function refreshAccessToken(): Promise<string> {
   if (typeof window === "undefined")
     throw new Error("Cannot refresh token on server");
