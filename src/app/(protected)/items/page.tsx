@@ -148,7 +148,7 @@ export default function ItemsPage() {
     return matchesCategory && matchesSearch;
   });
 
-  const itemsByCategory = categories
+  const itemsByCategory = (categories ?? [])
     .map((category) => ({
       ...category,
       items: filteredItems.filter((item) => item.category_id === category.id),
@@ -197,7 +197,7 @@ export default function ItemsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">All Categories</SelectItem>
-                {categories.map((category) => (
+                {(categories ?? []).map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}
                   </SelectItem>
@@ -232,7 +232,7 @@ export default function ItemsPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {itemsByCategory.map((group) => (
+          {(itemsByCategory ?? []).map((group) => (
             <div
               key={group.id}
               className="bg-white rounded-lg border overflow-hidden shadow-sm"
@@ -273,7 +273,7 @@ export default function ItemsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {group.items.map((item) => (
+                    {(group ?? []).items.map((item) => (
                       <tr
                         key={item.id}
                         className="border-b last:border-0 hover:bg-muted/20 transition-colors"
@@ -341,7 +341,7 @@ export default function ItemsPage() {
                 required
               >
                 <option value="">Select category</option>
-                {categories.map((c) => (
+                {(categories ?? []).map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
                   </option>

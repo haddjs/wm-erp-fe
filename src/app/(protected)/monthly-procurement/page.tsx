@@ -64,7 +64,7 @@ export default function MonthlyProcurementPage() {
       const payload = {
         branch_id: formData.branch_id,
         period: formData.period,
-        items: items.map((item) => ({
+        items: (items ?? []).map((item) => ({
           category_id: item.category_id,
           item_id: item.item_id,
           code: item.code,

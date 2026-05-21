@@ -43,7 +43,7 @@ export default function CategoriesPage() {
     try {
       setLoading(true);
       const response = await getCategories({ limit: 100 });
-      setCategories(response.data);
+      setCategories(response.data ?? []);
     } catch (error) {
       console.error("Failed to fetch categories:", error);
     } finally {
@@ -270,7 +270,7 @@ function CategoryTable({
         </tr>
       </thead>
       <tbody>
-        {categories.map((category) => (
+        {(categories ?? []).map((category) => (
           <tr
             key={category.id}
             className="border-t hover:bg-gray-50 transition-colors"

@@ -141,7 +141,7 @@ export default function DashboardPage() {
               className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
             >
               <option value="">All Branches</option>
-              {branches.map((b) => (
+              {(branches ?? []).map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}
                 </option>
@@ -153,7 +153,7 @@ export default function DashboardPage() {
               className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
             >
               <option value="">All Periods</option>
-              {availablePeriods.map((p) => (
+              {(availablePeriods ?? []).map((p) => (
                 <option key={p} value={p}>
                   {formatPeriod(p)}
                 </option>
@@ -301,7 +301,7 @@ export default function DashboardPage() {
                   </td>
                 </tr>
               ) : (
-                filteredMP.map((p) => (
+                (filteredMP ?? []).map((p) => (
                   <tr key={p.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 font-medium text-gray-800">
                       {formatPeriod(p.period)}

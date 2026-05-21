@@ -63,7 +63,7 @@ export default function EventProcurementPage() {
         branch_id: formData.branch_id,
         name: formData.name,
         date: new Date(formData.date).toISOString(),
-        items: items.map((item) => ({
+        items: (items ?? []).map((item) => ({
           category_id: item.category_id,
           item_id: item.item_id || null,
           code: item.code,

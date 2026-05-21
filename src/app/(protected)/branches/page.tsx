@@ -45,7 +45,7 @@ export default function BranchesPage() {
     try {
       setLoading(true);
       const data = await getBranches();
-      setBranches(data.data);
+      setBranches(data.data ?? []);
     } catch (error) {
       console.error("Failed to fetch branches:", error);
     } finally {
@@ -182,7 +182,7 @@ export default function BranchesPage() {
                 </td>
               </tr>
             ) : (
-              branches.map((branch) => (
+              (branches ?? []).map((branch) => (
                 <tr
                   key={branch.id}
                   className="border-t hover:bg-gray-50 transition-colors"

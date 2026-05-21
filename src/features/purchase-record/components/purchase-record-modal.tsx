@@ -62,8 +62,8 @@ export default function PurchaseRecordModal({
     notes: "",
   });
   const [fileId, setFileId] = useState<string | null>(null);
-const [fileUrl, setFileUrl] = useState<string | null>(null);
-const [filePath, setFilePath] = useState<string | null>(null);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [filePath, setFilePath] = useState<string | null>(null);
   const [migrateTarget, setMigrateTarget] = useState<PurchaseRecord | null>(
     null,
   );
@@ -86,7 +86,7 @@ const [filePath, setFilePath] = useState<string | null>(null);
       });
       setFileId(null);
       setFileUrl(null);
-      setFilePath(null); 
+      setFilePath(null);
     }
   }, [isOpen, item]);
 
@@ -104,7 +104,7 @@ const [filePath, setFilePath] = useState<string | null>(null);
     if (!item) return;
     try {
       const response = await getPurchaseRecordsByItemId(item.id);
-      setExistingRecords(response.data);
+      setExistingRecords(response.data ?? []);
     } catch (error) {
       console.error("Failed to fetch purchase records:", error);
     }

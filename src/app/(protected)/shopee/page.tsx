@@ -89,7 +89,7 @@ function ImportResultView({ result }: { result: ShopeeImportResult }) {
           <p className="text-xs font-bold text-rose-600 uppercase tracking-wider mb-2">
             Import Errors
           </p>
-          {result.errors.map((err, i) => (
+          {(result.errors ?? []).map((err, i) => (
             <p
               key={i}
               className="text-xs text-rose-700 dark:text-rose-400 flex items-start gap-2"
