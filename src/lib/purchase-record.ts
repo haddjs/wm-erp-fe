@@ -58,10 +58,11 @@ export async function updatePurchaseRecord(
 export async function updatePurchaseRecordStatus(
   id: string,
   status: PurchaseRecordStatus,
+  notes?: string,
 ): Promise<PurchaseRecord> {
   const res = await apiFetch(`/purchase-records/${id}/status`, {
     method: "PATCH",
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({ status, ...(notes ? { notes } : {}) }),
   });
 
   return res.data;

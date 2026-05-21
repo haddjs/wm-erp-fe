@@ -3,11 +3,12 @@ import { Request } from "@/types";
 import { Clock, CheckCircle, XCircle, DollarSign } from "lucide-react";
 
 export const getApprovalStats = (data: Request[]) => {
-  const pending = data.filter((r) => r.status === "pending").length;
-  const approved = data.filter((r) => r.status === "approved").length;
-  const rejected = data.filter((r) => r.status === "rejected").length;
+  const safeData = data ?? [];
+  const pending = safeData.filter((r) => r.status === "pending").length;
+  const approved = safeData.filter((r) => r.status === "approved").length;
+  const rejected = safeData.filter((r) => r.status === "rejected").length;
 
-  const totalNominal = data.reduce((acc, curr) => acc + curr.nominal, 0);
+  const totalNominal = safeData.reduce((acc, curr) => acc + curr.nominal, 0);
 
   return [
     {

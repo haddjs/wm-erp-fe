@@ -50,7 +50,7 @@ export default function DashboardPage() {
   const fetchBranches = async () => {
     try {
       const data = await getBranches(1, 100);
-      setBranches(data.data);
+      setBranches(data.data ?? []);
     } catch {
       toast.error("Failed to load branches");
     }

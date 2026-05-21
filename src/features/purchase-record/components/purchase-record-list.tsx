@@ -38,7 +38,7 @@ export default function PurchaseRecordList({
     try {
       if (type === "monthly") {
         const data = await getMonthlyProcurements({ page: 1, limit: 100 });
-        const filtered = data.filter(
+        const filtered = (data ?? []).filter(
           (p) => p.status === "approved" || p.status === "partial",
         );
         setProcurements(
@@ -46,7 +46,7 @@ export default function PurchaseRecordList({
         );
       } else {
         const data = await getEventProcurements({ page: 1, limit: 100 });
-        const filtered = data.filter(
+        const filtered = (data ?? []).filter(
           (p) => p.status === "approved" || p.status === "disburse",
         );
         setProcurements(
