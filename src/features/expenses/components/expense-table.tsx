@@ -39,9 +39,10 @@ import type { Branch } from "@/types/branch";
 type Props = {
   expenses: ExpenseResponse[];
   onRefetch: () => void;
+  canEdit?: boolean;
 };
 
-const ExpenseTable = ({ expenses, onRefetch }: Props) => {
+const ExpenseTable = ({ expenses, onRefetch, canEdit = true }: Props) => {
   const [editTarget, setEditTarget] = useState<ExpenseResponse | null>(null);
   const [detailTarget, setDetailTarget] = useState<ExpenseResponse | null>(
     null,
@@ -97,7 +98,6 @@ const ExpenseTable = ({ expenses, onRefetch }: Props) => {
               <TableHead>Name</TableHead>
               <TableHead>Branch</TableHead>
               <TableHead>Date</TableHead>
-              <TableHead>Amount</TableHead>
               <TableHead>Nominal</TableHead>
               <TableHead>Merchant</TableHead>
               <TableHead>Recorded By</TableHead>
@@ -136,9 +136,6 @@ const ExpenseTable = ({ expenses, onRefetch }: Props) => {
                     year: "numeric",
                   })}
                 </TableCell>
-                <TableCell>
-                  {exp.amount} item{exp.amount !== 1 ? "s" : ""}
-                </TableCell>
                 <TableCell className="font-semibold text-red-600">
                   Rp {exp.nominal.toLocaleString("id-ID")}
                 </TableCell>
@@ -155,21 +152,25 @@ const ExpenseTable = ({ expenses, onRefetch }: Props) => {
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => setEditTarget(exp)}
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="text-red-500 hover:text-red-700"
-                      onClick={() => setDeleteTarget(exp)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    {canEdit && (
+                      <>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => setEditTarget(exp)}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="text-red-500 hover:text-red-700"
+                          onClick={() => setDeleteTarget(exp)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
@@ -179,21 +180,23 @@ const ExpenseTable = ({ expenses, onRefetch }: Props) => {
       </div>
 
       {/* Edit Dialog */}
-      <Dialog open={!!editTarget} onOpenChange={() => setEditTarget(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Edit Expense</DialogTitle>
-          </DialogHeader>
-          {editTarget && (
-            <ExpenseForm
-              initialData={editTarget}
-              onSubmit={(p) => handleUpdate(p as UpdateExpensePayload)}
-              onCancel={() => setEditTarget(null)}
-              isLoading={isSubmitting}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {canEdit && (
+        <Dialog open={!!editTarget} onOpenChange={() => setEditTarget(null)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Edit Expense</DialogTitle>
+            </DialogHeader>
+            {editTarget && (
+              <ExpenseForm
+                initialData={editTarget}
+                onSubmit={(p) => handleUpdate(p as UpdateExpensePayload)}
+                onCancel={() => setEditTarget(null)}
+                isLoading={isSubmitting}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Detail Dialog */}
       <Dialog open={!!detailTarget} onOpenChange={() => setDetailTarget(null)}>
@@ -214,33 +217,35 @@ const ExpenseTable = ({ expenses, onRefetch }: Props) => {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog
-        open={!!deleteTarget}
-        onOpenChange={() => setDeleteTarget(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Expense</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete{" "}
-              <strong>{deleteTarget?.name}</strong>? This action cannot be
-              undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isSubmitting}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isSubmitting}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {isSubmitting ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {canEdit && (
+        <AlertDialog
+          open={!!deleteTarget}
+          onOpenChange={() => setDeleteTarget(null)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Expense</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete{" "}
+                <strong>{deleteTarget?.name}</strong>? This action cannot be
+                undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isSubmitting}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                disabled={isSubmitting}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {isSubmitting ? "Deleting..." : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </>
   );
 };

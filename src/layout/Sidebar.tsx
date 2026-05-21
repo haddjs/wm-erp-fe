@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Menu, ChevronLeft } from "lucide-react";
+import { LogOut, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -8,9 +8,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-import { getSidebarItemsByRole } from "@/mocks/sidebarItems";
 import { SIDEBAR_ITEMS } from "@/config/user";
-import { useAuth } from "@/mocks/user";
+import { useAuth } from "@/context/AuthContext";
+import { UserRoleLabel } from "@/types/user";
 
 const Sidebar = () => {
   const pathname = usePathname();
@@ -23,9 +23,9 @@ const Sidebar = () => {
     router.push("/login");
   };
 
-  const sidebarItems = SIDEBAR_ITEMS.filter((item) =>
-    item.roles.includes(user?.role),
-  );
+  const sidebarItems = user
+    ? SIDEBAR_ITEMS.filter((item) => item.roles.includes(user.role))
+    : [];
 
   return (
     <aside
@@ -49,7 +49,7 @@ const Sidebar = () => {
       </Button>
 
       <div className="flex h-screen flex-col">
-        {/* Header Section */}
+        {/* Header */}
         <div className="flex h-20 items-center px-4 py-6">
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="shrink-0 rounded-xl bg-blue-600 p-2">
@@ -74,7 +74,7 @@ const Sidebar = () => {
           </div>
         </div>
 
-        {/* Navigation Section */}
+        {/* Navigation */}
         <nav className="flex-1 space-y-1 px-3 py-4">
           {sidebarItems.map((item) => {
             const Icon = item.icon;
@@ -112,7 +112,7 @@ const Sidebar = () => {
           })}
         </nav>
 
-        {/* Footer / User Section */}
+        {/* Footer */}
         <div className="border-t border-slate-200 p-4">
           <Button
             variant="ghost"
@@ -130,15 +130,15 @@ const Sidebar = () => {
 
           {!isCollapsed && user && (
             <div className="mt-4 flex items-center gap-3 rounded-lg border bg-white p-2 shadow-sm">
-              <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">
-                {user.name?.charAt(0) || "U"}
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-600">
+                {user.name?.charAt(0).toUpperCase() ?? "U"}
               </div>
               <div className="flex flex-col overflow-hidden">
                 <span className="truncate text-xs font-semibold text-slate-900">
                   {user.name}
                 </span>
-                <span className="truncate text-[10px] text-slate-500 capitalize">
-                  {user.role}
+                <span className="truncate text-[10px] text-slate-500">
+                  {UserRoleLabel[user.role]}{" "}
                 </span>
               </div>
             </div>

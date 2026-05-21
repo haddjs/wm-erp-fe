@@ -7,8 +7,8 @@ import {
   updateMonthlyProcurementStatus,
 } from "@/lib/monthly-procurement";
 import { useAuth } from "@/context/AuthContext";
+import { ROLES } from "@/context/AuthContext";
 import type { MonthlyProcurement } from "@/types/monthly-procurement";
-import MPTable from "./monthly-procurement-table";
 import {
   Calendar,
   User,
@@ -36,28 +36,26 @@ export default function MonthlyProcurementDetail({
   const [updating, setUpdating] = useState(false);
   const [revising, setRevising] = useState(false);
 
-  const canApprove = user?.role === "Admin" || user?.role === "Finance";
+  const canApprove = user?.role === ROLES.ADMIN || user?.role === ROLES.FINANCE;
+  const canEditProcurement =
+    user?.role === ROLES.ADMIN || user?.role === ROLES.GA;
+  const canEditQty = user?.role === ROLES.ADMIN || user?.role === ROLES.FINANCE;
+
   const isPending = procurement?.status === "pending";
   const isApproved = procurement?.status === "approved";
-  const showActionButtons = canApprove && isPending;
-  const canEdit =
-    (user?.role === "Admin" || user?.role === "Finance") && isPending;
-
   const isRejected = procurement?.status === "rejected";
-  const canRevise =
-    (user?.role === "Admin" || user?.role === "GA") && isRejected;
+
+  const showActionButtons = canApprove && isPending;
+  const showPartialButton = canApprove && isApproved;
+  const canRevise = canEditProcurement && isRejected;
 
   useEffect(() => {
-    if (procurementId) {
-      fetchProcurement();
-    } else {
-      setProcurement(null);
-    }
+    if (procurementId) fetchProcurement();
+    else setProcurement(null);
   }, [procurementId]);
 
   const fetchProcurement = async () => {
     if (!procurementId) return;
-
     setLoading(true);
     try {
       const data = await getMonthlyProcurementById(procurementId);
@@ -71,7 +69,6 @@ export default function MonthlyProcurementDetail({
 
   const handleApprove = async () => {
     if (!procurement) return;
-
     setUpdating(true);
     try {
       await updateMonthlyProcurementStatus(procurement.id, "approved");
@@ -87,7 +84,6 @@ export default function MonthlyProcurementDetail({
 
   const handleReject = async () => {
     if (!procurement) return;
-
     setUpdating(true);
     try {
       await updateMonthlyProcurementStatus(procurement.id, "rejected");
@@ -96,6 +92,21 @@ export default function MonthlyProcurementDetail({
     } catch (error) {
       console.error("Failed to reject:", error);
       alert("Failed to reject monthly procurement. Please try again.");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handlePartial = async () => {
+    if (!procurement) return;
+    setUpdating(true);
+    try {
+      await updateMonthlyProcurementStatus(procurement.id, "partial");
+      await fetchProcurement();
+      onStatusChange?.();
+    } catch (error) {
+      console.error("Failed to mark partial:", error);
+      alert("Failed to update status. Please try again.");
     } finally {
       setUpdating(false);
     }
@@ -142,7 +153,7 @@ export default function MonthlyProcurementDetail({
   if (loading) {
     return (
       <div className="flex-1 bg-white h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
       </div>
     );
   }
@@ -180,7 +191,6 @@ export default function MonthlyProcurementDetail({
     };
     const config = statusConfig[procurement.status] || statusConfig.pending;
     const Icon = config.icon;
-
     return (
       <span
         className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${config.color}`}
@@ -215,7 +225,7 @@ export default function MonthlyProcurementDetail({
               </p>
               <p className="text-sm text-gray-600 flex items-center gap-1">
                 <User size={14} />
-                Branch :{" "}
+                Branch:{" "}
                 <span className="font-medium">
                   {procurement.branch_name || procurement.branch_id}
                 </span>
@@ -257,15 +267,15 @@ export default function MonthlyProcurementDetail({
         <ProcurementTable
           items={procurement.procurement_items || []}
           onRefresh={fetchProcurement}
-          canApprove={showActionButtons}
-          canEdit={canEdit}
+          canApprove={canApprove}
+          canEdit={canEditQty && isPending}
           type="monthly"
           procurementStatus={procurement.status}
         />
       </div>
 
       {/* Sticky Action Bar */}
-      {(showActionButtons || canRevise) && (
+      {(showActionButtons || showPartialButton || canRevise) && (
         <div className="sticky bottom-0 z-10 px-6 py-4 border-t bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] flex items-center justify-between gap-3">
           {showActionButtons && (
             <>
@@ -294,6 +304,26 @@ export default function MonthlyProcurementDetail({
               </div>
             </>
           )}
+
+          {/* Partial button was missing — monthly procurement has a "partial" status */}
+          {showPartialButton && (
+            <>
+              <p className="text-xs text-gray-400">
+                Some items may still be pending. You can mark this as partially
+                fulfilled.
+              </p>
+              <Button
+                onClick={handlePartial}
+                disabled={updating}
+                variant="outline"
+                className="border-purple-200 text-purple-600 hover:bg-purple-50 px-6 py-2 text-sm font-medium disabled:opacity-50"
+              >
+                <CreditCard className="w-4 h-4 mr-2" />
+                {updating ? "Processing..." : "Mark as Partial"}
+              </Button>
+            </>
+          )}
+
           {canRevise && (
             <>
               <p className="text-xs text-gray-400">

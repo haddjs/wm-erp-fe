@@ -62,7 +62,8 @@ export default function PurchaseRecordModal({
     notes: "",
   });
   const [fileId, setFileId] = useState<string | null>(null);
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
+const [fileUrl, setFileUrl] = useState<string | null>(null);
+const [filePath, setFilePath] = useState<string | null>(null);
   const [migrateTarget, setMigrateTarget] = useState<PurchaseRecord | null>(
     null,
   );
@@ -71,7 +72,7 @@ export default function PurchaseRecordModal({
   const [branches, setBranches] = useState<Branch[]>([]);
   const [migrateError, setMigrateError] = useState<string | null>(null);
 
-  const canReview = user?.role === "Admin" || user?.role === "Finance";
+  const canReview = user?.role === 1 || user?.role === 2;
 
   useEffect(() => {
     if (isOpen && item) {
@@ -85,6 +86,7 @@ export default function PurchaseRecordModal({
       });
       setFileId(null);
       setFileUrl(null);
+      setFilePath(null); 
     }
   }, [isOpen, item]);
 
@@ -363,13 +365,15 @@ export default function PurchaseRecordModal({
                   Receipt
                 </label>
                 <FileUploadButton
-                  onUploaded={(id, url) => {
+                  onUploaded={(id, url, path) => {
                     setFileId(id);
                     setFileUrl(url);
+                    setFilePath(path);
                   }}
                   onClear={() => {
                     setFileId(null);
                     setFileUrl(null);
+                    setFilePath(null);
                   }}
                   currentFileUrl={fileUrl}
                   label="Attach Invoice"
@@ -448,7 +452,7 @@ export default function PurchaseRecordModal({
                         </div>
                       )}
 
-                      {(user?.role === "admin" || user?.role === "ga") && (
+                      {(user?.role === 1 || user?.role === 2) && (
                         <div className="flex justify-end pt-1 border-t border-slate-100 dark:border-zinc-900">
                           <Button
                             type="button"

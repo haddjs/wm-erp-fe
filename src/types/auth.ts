@@ -1,3 +1,5 @@
+import type { UserRole } from "@/types/user";
+
 export interface RegisterPayload {
   email: string;
   name: string;
@@ -32,5 +34,5 @@ export interface UserProfile {
   id: string;
   email: string;
   name: string;
-  role: string;
+  role: UserRole;
 }

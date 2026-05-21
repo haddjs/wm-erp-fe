@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Paperclip, X, Loader2, FileCheck } from "lucide-react";
 
 type Props = {
-  onUploaded: (fileId: string, fileUrl: string) => void;
+  onUploaded: (fileId: string, fileUrl: string, filePath: string) => void;
   onClear?: () => void;
   currentFileUrl?: string | null;
   disabled?: boolean;
@@ -32,7 +32,7 @@ export default function FileUploadButton({
     setUploading(true);
     try {
       const res = await uploadFile(file);
-      onUploaded(res.file_id, res.file_url);
+      onUploaded(res.file_id, res.file_url, res.file_path);
     } catch {
       setError("Upload failed. Please try again.");
     } finally {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useAuth, ROLES } from "@/context/AuthContext";
 import {
   getBranches,
   createBranch,
@@ -8,10 +9,7 @@ import {
   deleteBranch,
 } from "@/lib/branch";
 import type { Branch } from "@/types/branch";
-import { useAuth } from "@/context/AuthContext";
 import { Plus, Pencil, Trash2, Wallet } from "lucide-react";
-
-// Shadcn UI Imports
 import {
   Dialog,
   DialogContent,
@@ -26,7 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
 export default function BranchesPage() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user } = useAuth();
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,17 +35,11 @@ export default function BranchesPage() {
     balance: 0,
   });
 
-  const isAdminUser = user?.role === "Admin";
-
   useEffect(() => {
-    if (!authLoading && user) {
-      if (isAdminUser) {
-        fetchBranches();
-      } else {
-        setLoading(false);
-      }
-    }
-  }, [user, authLoading, isAdminUser]);
+    fetchBranches();
+  }, []);
+
+  const canEdit = user?.role === ROLES.ADMIN;
 
   const fetchBranches = async () => {
     try {
@@ -65,7 +57,6 @@ export default function BranchesPage() {
     e.preventDefault();
     try {
       if (editingBranch) {
-        // Don't send balance on update — it's managed by expense transactions
         await updateBranch(editingBranch.id, {
           name: formData.name,
           address: formData.address,
@@ -74,8 +65,7 @@ export default function BranchesPage() {
         await createBranch(formData);
       }
       await fetchBranches();
-      setIsModalOpen(false);
-      resetForm();
+      handleOpenChange(false);
     } catch (error) {
       console.error("Failed to save branch:", error);
       alert("Failed to save branch. Please check your inputs.");
@@ -83,20 +73,14 @@ export default function BranchesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this branch?")) {
-      try {
-        await deleteBranch(id);
-        await fetchBranches();
-      } catch (error) {
-        console.error("Failed to delete branch:", error);
-        alert("Failed to delete branch. It might have related records.");
-      }
+    if (!confirm("Are you sure you want to delete this branch?")) return;
+    try {
+      await deleteBranch(id);
+      await fetchBranches();
+    } catch (error) {
+      console.error("Failed to delete branch:", error);
+      alert("Failed to delete branch. It might have related records.");
     }
-  };
-
-  const resetForm = () => {
-    setEditingBranch(null);
-    setFormData({ name: "", address: "", balance: 0 });
   };
 
   const openEditModal = (branch: Branch) => {
@@ -112,7 +96,8 @@ export default function BranchesPage() {
   const handleOpenChange = (open: boolean) => {
     setIsModalOpen(open);
     if (!open) {
-      resetForm();
+      setEditingBranch(null);
+      setFormData({ name: "", address: "", balance: 0 });
     }
   };
 
@@ -124,31 +109,10 @@ export default function BranchesPage() {
 
   const totalBalance = branches.reduce((sum, b) => sum + b.balance, 0);
 
-  if (authLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
-
-  if (loading && isAdminUser) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
-
-  if (!isAdminUser) {
-    return (
-      <div className="p-8">
-        <div className="bg-red-50 text-red-700 p-4 rounded-lg border border-red-200">
-          ⚠️ Access Denied
-          <p className="text-sm mt-1 text-red-600">
-            This page is only accessible by administrators.
-          </p>
-        </div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
       </div>
     );
   }
@@ -163,13 +127,15 @@ export default function BranchesPage() {
             Manage branch locations and budgets
           </p>
         </div>
-        <Button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add Branch
-        </Button>
+        {canEdit && (
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Branch
+          </Button>
+        )}
       </div>
 
       {/* Summary Card */}
@@ -243,26 +209,28 @@ export default function BranchesPage() {
                     </div>
                   </td>
                   <td className="p-4 text-center">
-                    <div className="flex justify-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openEditModal(branch)}
-                        className="text-blue-600 hover:text-blue-800 h-8 w-8"
-                        title="Edit"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(branch.id)}
-                        className="text-destructive hover:text-destructive/90 h-8 w-8"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    {canEdit && (
+                      <div className="flex justify-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openEditModal(branch)}
+                          className="text-blue-600 hover:text-blue-800 h-8 w-8"
+                          title="Edit"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(branch.id)}
+                          className="text-destructive hover:text-destructive/90 h-8 w-8"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))
@@ -271,112 +239,111 @@ export default function BranchesPage() {
         </table>
       </div>
 
-      {/* Shadcn UI Dialog */}
-      <Dialog open={isModalOpen} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {editingBranch ? "Edit Branch" : "Add New Branch"}
-            </DialogTitle>
-            <DialogDescription>
-              {editingBranch
-                ? "Update structural details for this office location."
-                : "Register a fresh corporate branch location and provision initial budgets."}
-            </DialogDescription>
-          </DialogHeader>
+      {/* Dialog */}
+      {canEdit && (
+        <Dialog open={isModalOpen} onOpenChange={handleOpenChange}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>
+                {editingBranch ? "Edit Branch" : "Add New Branch"}
+              </DialogTitle>
+              <DialogDescription>
+                {editingBranch
+                  ? "Update structural details for this office location."
+                  : "Register a fresh corporate branch location and provision initial budgets."}
+              </DialogDescription>
+            </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-4 py-2">
-              <div className="space-y-1">
-                <Label htmlFor="branch-name">
-                  Branch Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="branch-name"
-                  type="text"
-                  placeholder="e.g., Jakarta Pusat"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  required
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="branch-address">
-                  Address <span className="text-destructive">*</span>
-                </Label>
-                <Textarea
-                  id="branch-address"
-                  placeholder="Full branch address"
-                  value={formData.address}
-                  onChange={(e) =>
-                    setFormData({ ...formData, address: e.target.value })
-                  }
-                  rows={3}
-                  required
-                />
-              </div>
-
-              {/* Only show initial balance on create */}
-              {!editingBranch && (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-4 py-2">
                 <div className="space-y-1">
-                  <Label htmlFor="initial-balance">Initial Balance (Rp)</Label>
+                  <Label htmlFor="branch-name">
+                    Branch Name <span className="text-destructive">*</span>
+                  </Label>
                   <Input
-                    id="initial-balance"
-                    type="number"
-                    placeholder="0"
-                    value={formData.balance || ""}
+                    id="branch-name"
+                    placeholder="e.g., Jakarta Pusat"
+                    value={formData.name}
                     onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        balance: Number(e.target.value),
-                      })
+                      setFormData({ ...formData, name: e.target.value })
                     }
-                    min="0"
-                    step="1000"
+                    required
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Balance will be automatically adjusted as expenses are
-                    recorded
-                  </p>
                 </div>
-              )}
 
-              {/* Show read-only balance info on edit */}
-              {editingBranch && (
-                <div className="bg-muted/50 rounded-lg p-3 border">
-                  <p className="text-xs text-muted-foreground font-medium uppercase mb-1">
-                    Current Balance
-                  </p>
-                  <p
-                    className={`text-base font-bold ${getBalanceStyle(editingBranch.balance)}`}
-                  >
-                    Rp {editingBranch.balance.toLocaleString("id-ID")}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Balance is managed automatically by expense transactions
-                  </p>
+                <div className="space-y-1">
+                  <Label htmlFor="branch-address">
+                    Address <span className="text-destructive">*</span>
+                  </Label>
+                  <Textarea
+                    id="branch-address"
+                    placeholder="Full branch address"
+                    value={formData.address}
+                    onChange={(e) =>
+                      setFormData({ ...formData, address: e.target.value })
+                    }
+                    rows={3}
+                    required
+                  />
                 </div>
-              )}
-            </div>
 
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleOpenChange(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit">
-                {editingBranch ? "Update" : "Create"} Branch
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+                {!editingBranch ? (
+                  <div className="space-y-1">
+                    <Label htmlFor="initial-balance">
+                      Initial Balance (Rp)
+                    </Label>
+                    <Input
+                      id="initial-balance"
+                      type="number"
+                      placeholder="0"
+                      value={formData.balance || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          balance: Number(e.target.value),
+                        })
+                      }
+                      min="0"
+                      step="1000"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Balance will be automatically adjusted as expenses are
+                      recorded
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-muted/50 rounded-lg p-3 border">
+                    <p className="text-xs text-muted-foreground font-medium uppercase mb-1">
+                      Current Balance
+                    </p>
+                    <p
+                      className={`text-base font-bold ${getBalanceStyle(editingBranch.balance)}`}
+                    >
+                      Rp {editingBranch.balance.toLocaleString("id-ID")}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Balance is managed automatically by expense transactions
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleOpenChange(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit">
+                  {editingBranch ? "Update" : "Create"} Branch
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

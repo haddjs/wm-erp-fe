@@ -1,4 +1,3 @@
-// features/approval-ep/components/event-procurement-detail.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,6 +7,7 @@ import {
   updateEventProcurementStatus,
 } from "@/lib/event-procurement";
 import { useAuth } from "@/context/AuthContext";
+import { ROLES } from "@/context/AuthContext";
 import type { EventProcurement } from "@/types/event-procurement";
 import ProcurementTable from "./event-procurement-table";
 import {
@@ -30,27 +30,24 @@ export default function EventProcurementDetail({
   const [updating, setUpdating] = useState(false);
   const [revising, setRevising] = useState(false);
 
-  const isRejected = procurement?.status === "rejected";
-  const canRevise =
-    (user?.role === "Admin" || user?.role === "GA") && isRejected;
+  const canApprove = user?.role === ROLES.ADMIN || user?.role === ROLES.FINANCE;
+  const canEdit = user?.role === ROLES.ADMIN || user?.role === ROLES.GA;
 
-  const canApprove = user?.role === "Admin" || user?.role === "Finance";
   const isPending = procurement?.status === "pending";
   const isApproved = procurement?.status === "approved";
+  const isRejected = procurement?.status === "rejected";
+
   const showActionButtons = canApprove && isPending;
   const showDisburseButton = canApprove && isApproved;
+  const canRevise = canEdit && isRejected;
 
   useEffect(() => {
-    if (procurementId) {
-      fetchProcurement();
-    } else {
-      setProcurement(null);
-    }
+    if (procurementId) fetchProcurement();
+    else setProcurement(null);
   }, [procurementId]);
 
   const fetchProcurement = async () => {
     if (!procurementId) return;
-
     setLoading(true);
     try {
       const data = await getEventProcurementById(procurementId);
@@ -64,7 +61,6 @@ export default function EventProcurementDetail({
 
   const handleApprove = async () => {
     if (!procurement) return;
-
     setUpdating(true);
     try {
       await updateEventProcurementStatus(procurement.id, "approved");
@@ -77,12 +73,8 @@ export default function EventProcurementDetail({
     }
   };
 
-  const canEdit =
-    (user?.role === "Admin" || user?.role === "Finance") && isPending;
-
   const handleDisburse = async () => {
     if (!procurement) return;
-
     setUpdating(true);
     try {
       await updateEventProcurementStatus(procurement.id, "disburse");
@@ -97,7 +89,6 @@ export default function EventProcurementDetail({
 
   const handleReject = async () => {
     if (!procurement) return;
-
     setUpdating(true);
     try {
       await updateEventProcurementStatus(procurement.id, "rejected");
@@ -148,7 +139,7 @@ export default function EventProcurementDetail({
   if (loading) {
     return (
       <div className="flex-1 bg-white h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
       </div>
     );
   }
@@ -186,7 +177,6 @@ export default function EventProcurementDetail({
     };
     const config = statusConfig[procurement.status] || statusConfig.pending;
     const Icon = config.icon;
-
     return (
       <span
         className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${config.color}`}
@@ -211,7 +201,7 @@ export default function EventProcurementDetail({
                 <User size={14} />
                 Submitted by:{" "}
                 <span className="font-medium">
-                  {procurement.submitter_name || procurement.submitter_id} -{" "}
+                  {procurement.submitter_name || procurement.submitter_id} —{" "}
                   {procurement.branch_name || procurement.branch_id}
                 </span>
               </p>
@@ -234,11 +224,9 @@ export default function EventProcurementDetail({
                 <span className="text-xs text-gray-500">Status:</span>
                 {getStatusBadge()}
               </div>
-              <div>
-                <span className="text-xs text-gray-500">
-                  Approved by: {procurement.approver_name}
-                </span>
-              </div>
+              <span className="text-xs text-gray-500">
+                Approved by: {procurement.approver_name}
+              </span>
             </div>
           </div>
           <div className="text-right">
@@ -256,7 +244,7 @@ export default function EventProcurementDetail({
         <ProcurementTable
           items={procurement.procurement_items || []}
           onRefresh={fetchProcurement}
-          canApprove={showActionButtons}
+          canApprove={canApprove}
           canEdit={canEdit}
           type="event"
           procurementStatus={procurement.status}
@@ -264,7 +252,7 @@ export default function EventProcurementDetail({
       </div>
 
       {/* Action Buttons */}
-      {(showActionButtons || canRevise) && (
+      {(showActionButtons || showDisburseButton || canRevise) && (
         <div className="p-4 border-t bg-white flex items-center justify-between gap-3">
           {showActionButtons && (
             <div className="flex justify-end gap-3 w-full">
@@ -284,8 +272,22 @@ export default function EventProcurementDetail({
               </button>
             </div>
           )}
+
+          {/* ✅ Disburse button was missing — now rendered */}
+          {showDisburseButton && (
+            <div className="flex justify-end gap-3 w-full">
+              <button
+                onClick={handleDisburse}
+                disabled={updating}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg text-sm font-medium shadow-lg shadow-purple-200 transition-all disabled:opacity-50"
+              >
+                {updating ? "Processing..." : "Disburse Funds"}
+              </button>
+            </div>
+          )}
+
           {canRevise && (
-            <>
+            <div className="flex items-center justify-between w-full">
               <p className="text-xs text-gray-400">
                 This event was rejected. You can revise and resubmit it.
               </p>
@@ -296,7 +298,7 @@ export default function EventProcurementDetail({
               >
                 {revising ? "Submitting..." : "Revise & Resubmit"}
               </button>
-            </>
+            </div>
           )}
         </div>
       )}

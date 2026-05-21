@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth, isAdmin } from "@/context/AuthContext";
+import { useAuth, isAdmin, ROLES } from "@/context/AuthContext";
 import { getBranches } from "@/lib/branch";
+import { hasRole } from "@/context/AuthContext";
 import { getMPDashboard, getEPDashboard } from "@/lib/dashboard";
 import {
   DollarSign,
@@ -34,16 +35,17 @@ export default function DashboardPage() {
   const [mpData, setMpData] = useState<MPDashboardResponse | null>(null);
   const [epData, setEpData] = useState<EPDashboardResponse | null>(null);
 
-  const admin = isAdmin(user);
+  const canViewDashboard = hasRole(user, ROLES.ADMIN, ROLES.GA, ROLES.FINANCE);
 
   useEffect(() => {
-    if (admin) fetchBranches();
+    fetchBranches();
+    if (canViewDashboard) fetchDashboardData();
     else setLoading(false);
-  }, [admin]);
+  }, [canViewDashboard]);
 
   useEffect(() => {
-    if (admin) fetchDashboardData();
-  }, [selectedBranchId, admin]);
+    fetchDashboardData();
+  }, [selectedBranchId]);
 
   const fetchBranches = async () => {
     try {
@@ -98,13 +100,6 @@ export default function DashboardPage() {
     };
     return map[status] || "bg-gray-50 text-gray-700 border-gray-200";
   };
-
-  if (!admin)
-    return (
-      <div className="p-8 text-red-600 font-medium">
-        Access Denied: Admin role required.
-      </div>
-    );
 
   if (loading)
     return (

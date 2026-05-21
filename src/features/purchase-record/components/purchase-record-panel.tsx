@@ -51,8 +51,8 @@ export default function PurchaseRecordPanel({
   const [rejectTarget, setRejectTarget] = useState<PurchaseRecord | null>(null);
   const [rejectNotes, setRejectNotes] = useState("");
 
-  const canRecord = user?.role === "Admin" || user?.role === "GeneralAffairs";
-  const canReview = user?.role === "Admin" || user?.role === "Finance";
+  const canRecord = user?.role === 1 || user?.role === 2;
+  const canReview = user?.role === 1 || user?.role === 3;
 
   const [formData, setFormData] = useState({
     quantity_bought: item.quantity,

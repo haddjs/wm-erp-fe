@@ -1,3 +1,4 @@
+import { UserRole } from "@/types/user";
 import {
   BriefcaseBusiness,
   CircleCheck,
@@ -8,73 +9,42 @@ import {
   Pen,
   Timer,
   Tag,
+  Users,
+  ShoppingCart,
 } from "lucide-react";
-
-export type Role = "admin" | "finance" | "ga";
 
 export interface SidebarItem {
   icon: any;
   label: string;
   path: string;
-  roles: Role[];
+  roles: UserRole[];
 }
 
-export const SIDEBAR_ITEMS = [
-  //Finance Access
-  {
-    icon: LayoutDashboard,
-    label: "Dashboard",
-    path: "/",
-    roles: ["admin", "finance", "ga"],
-  },
-  {
-    icon: Pen,
-    label: "Item",
-    path: "/items",
-    roles: ["admin", "finance"],
-  },
-  {
-    icon: MapPin,
-    label: "Branches",
-    path: "/branches",
-    roles: ["admin"],
-  },
-  {
-    icon: Tag,
-    label: "Category",
-    path: "/category",
-    roles: ["admin"],
-  },
-
-  //GA Access
+export const SIDEBAR_ITEMS: SidebarItem[] = [
+  { icon: LayoutDashboard, label: "Dashboard", path: "/", roles: [1, 2, 3] },
+  { icon: Pen, label: "Item", path: "/items", roles: [1, 2, 3] },
+  { icon: MapPin, label: "Branches", path: "/branches", roles: [1] },
+  { icon: Tag, label: "Category", path: "/category", roles: [1, 2, 3] },
+  { icon: Users, label: "Users", path: "/users", roles: [1] },
   {
     icon: CircleCheck,
     label: "Monthly Procurement",
     path: "/monthly-procurement",
-    roles: ["admin", "finance"],
+    roles: [1, 2, 3],
   },
   {
     icon: BriefcaseBusiness,
     label: "Event Procurement",
     path: "/event-procurement",
-    roles: ["admin", "ga"],
+    roles: [1, 2, 3],
   },
-  {
-    icon: Wallet,
-    label: "Expenses",
-    path: "/expense",
-    roles: ["admin", "ga"],
-  },
+  { icon: Wallet, label: "Expenses", path: "/expense", roles: [1, 2] },
   {
     icon: Timer,
     label: "Purchase Record",
     path: "/purchase-records",
-    roles: ["admin", "ga"],
+    roles: [1, 2, 3],
   },
-  {
-    icon: Clock,
-    label: "Activity Log",
-    path: "/logs",
-    roles: ["admin", "finance", "ga"],
-  },
+  { icon: Clock, label: "Activity Log", path: "/logs", roles: [1, 2, 3] },
+  { icon: ShoppingCart, label: "Shopee", path: "/shopee", roles: [1] },
 ];

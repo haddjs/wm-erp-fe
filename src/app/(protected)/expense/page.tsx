@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useAuth, ROLES } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,9 +20,11 @@ const ExpensePage = () => {
   const [page, setPage] = useState(1);
   const [showCreate, setShowCreate] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
 
   const { expenses, paging, loading, error, refetch } = useExpenses(page, 10);
 
+  const canEdit = user?.role === ROLES.ADMIN || user?.role === ROLES.GA;
   const handleCreate = async (payload: CreateExpensePayload) => {
     setIsSubmitting(true);
     try {
@@ -44,10 +47,12 @@ const ExpensePage = () => {
               Manage and track all recorded expenses
             </p>
           </div>
-          <Button onClick={() => setShowCreate(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Expense
-          </Button>
+          {canEdit && (
+            <Button onClick={() => setShowCreate(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Expense
+            </Button>
+          )}
         </div>
       </div>
 
@@ -58,7 +63,11 @@ const ExpensePage = () => {
         {loading ? (
           <div className="text-center py-12 text-gray-400">Loading...</div>
         ) : (
-          <ExpenseTable expenses={expenses} onRefetch={refetch} />
+          <ExpenseTable
+            expenses={expenses}
+            onRefetch={refetch}
+            canEdit={canEdit}
+          />
         )}
 
         {/* Pagination */}
@@ -91,18 +100,20 @@ const ExpensePage = () => {
       </div>
 
       {/* Create Dialog */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Add Expense</DialogTitle>
-          </DialogHeader>
-          <ExpenseForm
-            onSubmit={(p) => handleCreate(p as CreateExpensePayload)}
-            onCancel={() => setShowCreate(false)}
-            isLoading={isSubmitting}
-          />
-        </DialogContent>
-      </Dialog>
+      {canEdit && (
+        <Dialog open={showCreate} onOpenChange={setShowCreate}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Add Expense</DialogTitle>
+            </DialogHeader>
+            <ExpenseForm
+              onSubmit={(p) => handleCreate(p as CreateExpensePayload)}
+              onCancel={() => setShowCreate(false)}
+              isLoading={isSubmitting}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

@@ -44,20 +44,6 @@ export default function SettingsPage() {
     );
   }
 
-  if (!admin) {
-    return (
-      <div className="p-8">
-        <div className="bg-red-50 text-red-700 p-4 rounded-lg border border-red-200">
-          ⚠️ Access Denied
-          <p className="text-sm mt-1 text-red-600">
-            This page is only accessible by administrators. Your role:{" "}
-            {user?.role || "Unknown"}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="p-8">
       <div className="mb-6">

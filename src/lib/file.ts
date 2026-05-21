@@ -18,21 +18,22 @@ export async function uploadFile(file: File): Promise<UploadFileResponse> {
   return res.data;
 }
 
+export async function getFileById(fileId: string): Promise<UploadFileResponse> {
+  const res = await apiFetch(`/purchase-records/by-item/${fileId}`);
+  return res.data;
+}
+
 export async function openFileWithAuth(filePath: string): Promise<void> {
   const token = localStorage.getItem("access_token");
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/v1/files/proxy/${filePath}`,
+    `${process.env.NEXT_PUBLIC_API_URL}/files/proxy/${filePath}`,
     {
       headers: { Authorization: `Bearer ${token}` },
     },
   );
-
   if (!res.ok) throw new Error("Failed to fetch file");
-
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
   window.open(url, "_blank");
-
-  // clean up after a delay
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }

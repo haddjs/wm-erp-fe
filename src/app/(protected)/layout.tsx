@@ -1,7 +1,6 @@
-"use client";
-
 import { AuthGuard } from "@/context/AuthGuard";
-import DashboardLayout from "./layout/DashboardLayout";
+import Sidebar from "@/layout/Sidebar";
+import { RoleGuard } from "@/components/RoleGuard";
 
 export default function ProtectedLayout({
   children,
@@ -10,7 +9,12 @@ export default function ProtectedLayout({
 }) {
   return (
     <AuthGuard>
-      <DashboardLayout>{children}</DashboardLayout>
+      <div className="flex h-screen">
+        <Sidebar />
+        <main className="flex-1 overflow-y-auto p-6">
+          <RoleGuard>{children}</RoleGuard>
+        </main>
+      </div>
     </AuthGuard>
   );
 }

@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { getItems, createItem, updateItem, deleteItem } from "@/lib/item";
+import { useAuth, ROLES } from "@/context/AuthContext";
 import { getCategories } from "@/lib/category";
-import { useAuth, isAdmin } from "@/context/AuthContext";
 import { Plus, Pencil, Search, Package, X } from "lucide-react";
 import { toast } from "sonner";
 import type { ItemResponse } from "@/types/item";
@@ -47,15 +47,7 @@ export default function ItemsPage() {
     unit: "",
   });
 
-  const admin = isAdmin(user);
-
-  useEffect(() => {
-    if (admin) {
-      fetchData();
-    } else {
-      setLoading(false);
-    }
-  }, [admin]);
+  const canEdit = user?.role === ROLES.ADMIN;
 
   const fetchData = async () => {
     try {
@@ -73,6 +65,10 @@ export default function ItemsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,20 +155,6 @@ export default function ItemsPage() {
     }))
     .filter((group) => group.items.length > 0);
 
-  if (!admin) {
-    return (
-      <div className="p-8">
-        <div className="bg-destructive/10 text-destructive p-4 rounded-lg border border-destructive/20">
-          <h2 className="font-semibold">Access Denied</h2>
-          <p className="text-sm mt-1 text-muted-foreground">
-            This page is only accessible by administrators. Your role:{" "}
-            {user?.role || "Unknown"}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -191,10 +173,12 @@ export default function ItemsPage() {
             Manage procurement items and inventory
           </p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Add Item
-        </Button>
+        {canEdit && (
+          <Button onClick={() => setIsModalOpen(true)} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Add Item
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
@@ -281,9 +265,11 @@ export default function ItemsPage() {
                       <th className="p-3 text-left font-medium text-muted-foreground">
                         Unit
                       </th>
-                      <th className="p-3 text-center font-medium text-muted-foreground w-24">
-                        Actions
-                      </th>
+                      {canEdit && (
+                        <th className="p-3 text-center font-medium text-muted-foreground w-24">
+                          Actions
+                        </th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
@@ -307,19 +293,21 @@ export default function ItemsPage() {
                         <td className="p-3 text-muted-foreground">
                           {item.unit || "-"}
                         </td>
-                        <td className="p-3 text-center">
-                          <div className="flex justify-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openEditModal(item)}
-                              className="text-blue-600 hover:text-blue-800 h-8 w-8"
-                              title="Edit"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </td>
+                        {canEdit && (
+                          <td className="p-3 text-center">
+                            <div className="flex justify-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => openEditModal(item)}
+                                className="text-blue-600 hover:text-blue-800 h-8 w-8"
+                                title="Edit"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>

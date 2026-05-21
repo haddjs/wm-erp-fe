@@ -50,7 +50,6 @@ export default function ProcurementTable({
   const [rejectTarget, setRejectTarget] = useState<ProcurementItem | null>(
     null,
   );
-  const [rejectNotes, setRejectNotes] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editQty, setEditQty] = useState<number>(0);
 
@@ -75,7 +74,7 @@ export default function ProcurementTable({
     if (!rejectTarget) return;
     setUpdating(rejectTarget.id);
     try {
-      await rejectProcurementItem(rejectTarget.id);
+      await deleteProcurementItem(rejectTarget.id);
       setLocalItems((prev) =>
         prev.map((i) =>
           i.id === rejectTarget.id ? { ...i, status: "rejected" as const } : i,
@@ -87,7 +86,6 @@ export default function ProcurementTable({
     } finally {
       setUpdating(null);
       setRejectTarget(null);
-      setRejectNotes("");
     }
   };
 
@@ -335,14 +333,14 @@ export default function ProcurementTable({
                               >
                                 <XCircle size={13} /> Reject
                               </Button>
-                              <Button
+                              {/* <Button
                                 onClick={() => handleApprove(item)}
                                 disabled={updating === item.id}
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50"
                               >
                                 <CheckIcon size={13} className="stroke-[2.5]" />
                                 {updating === item.id ? "..." : "Approve"}
-                              </Button>
+                              </Button> */}
                             </>
                           )}
                         </div>
@@ -392,17 +390,6 @@ export default function ProcurementTable({
                           <span className="text-xs text-red-500 font-medium">
                             Rejected
                           </span>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            className="h-7 text-xs"
-                            disabled={updating === item.id}
-                            onClick={() => handleConfirmDelete(item)}
-                          >
-                            {updating === item.id
-                              ? "Deleting..."
-                              : "Confirm Remove"}
-                          </Button>
                         </div>
                       ) : null}
                     </td>
@@ -448,10 +435,7 @@ export default function ProcurementTable({
       <Dialog
         open={!!rejectTarget}
         onOpenChange={(open) => {
-          if (!open) {
-            setRejectTarget(null);
-            setRejectNotes("");
-          }
+          if (!open) setRejectTarget(null);
         }}
       >
         <DialogContent className="max-w-md">
@@ -460,41 +444,20 @@ export default function ProcurementTable({
               <XCircle className="w-5 h-5" /> Reject Item
             </DialogTitle>
           </DialogHeader>
-          <div className="py-2 space-y-3">
-            <p className="text-sm text-gray-600">
-              You are about to mark{" "}
-              <span className="font-semibold text-gray-900">
-                {rejectTarget?.item_name || rejectTarget?.code || "this item"}
-              </span>{" "}
-              as <span className="font-semibold text-red-600">rejected</span>.
-              The item will remain visible until GA confirms removal.
-            </p>
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">
-                Rejection Notes <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                value={rejectNotes}
-                onChange={(e) => setRejectNotes(e.target.value)}
-                placeholder="e.g., Item not in budget, duplicate request..."
-                rows={4}
-                className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-300 resize-none"
-              />
-            </div>
-          </div>
+          <p className="text-sm text-gray-600 py-2">
+            Are you sure you want to reject{" "}
+            <span className="font-semibold text-gray-900">
+              {rejectTarget?.item_name || rejectTarget?.code || "this item"}
+            </span>
+            ? This action cannot be undone.
+          </p>
           <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setRejectTarget(null);
-                setRejectNotes("");
-              }}
-            >
+            <Button variant="outline" onClick={() => setRejectTarget(null)}>
               Cancel
             </Button>
             <Button
               variant="destructive"
-              disabled={!rejectNotes.trim() || !!updating}
+              disabled={!!updating}
               onClick={handleRejectConfirm}
             >
               {updating ? "Rejecting..." : "Confirm Reject"}

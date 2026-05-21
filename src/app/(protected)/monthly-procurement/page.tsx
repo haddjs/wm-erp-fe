@@ -1,4 +1,3 @@
-// app/(protected)/monthly-procurement/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -9,6 +8,8 @@ import MPDetail from "@/features/approval-rab/components/monthly-procurement-det
 import { ProcurementForm } from "@/components/procurement/ProcurementForm";
 import { createMonthlyProcurement } from "@/lib/monthly-procurement";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
+import { ROLES } from "@/context/AuthContext";
 
 interface ProcurementItem {
   id: string;
@@ -25,15 +26,21 @@ interface ProcurementItem {
 }
 
 export default function MonthlyProcurementPage() {
+  const { user } = useAuth();
+
+  const canCreate = user?.role === ROLES.ADMIN || user?.role === ROLES.GA;
+  const canApprove = user?.role === ROLES.ADMIN || user?.role === ROLES.FINANCE;
+  const canView = user?.role === ROLES.GA;
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [items, setItems] = useState<ProcurementItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState<"create" | "approve">("create");
+  const [activeTab, setActiveTab] = useState<"create" | "approve">(
+    canCreate ? "create" : "approve",
+  );
   const [listKey, setListKey] = useState(0);
 
-  const handleStatusChange = () => {
-    setListKey((k) => k + 1);
-  };
+  const handleStatusChange = () => setListKey((k) => k + 1);
 
   const handleAddItem = (item: ProcurementItem) => {
     setItems([...items, item]);
@@ -52,11 +59,8 @@ export default function MonthlyProcurementPage() {
       toast.error("Please add at least one item");
       return;
     }
-
     setIsSubmitting(true);
-
     try {
-      const periodDate = new Date(formData.period);
       const payload = {
         branch_id: formData.branch_id,
         period: formData.period,
@@ -70,12 +74,10 @@ export default function MonthlyProcurementPage() {
           notes: item.notes,
         })),
       };
-
       await createMonthlyProcurement(payload);
       toast.success("Monthly procurement created successfully");
-
       setItems([]);
-      setActiveTab("approve");
+      if (canApprove) setActiveTab("approve");
     } catch (error: any) {
       console.error("Failed to create:", error);
       toast.error(error.message || "Failed to create monthly procurement");
@@ -86,7 +88,6 @@ export default function MonthlyProcurementPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50/50 dark:bg-zinc-900/30">
-      {/* Page Header Layout */}
       <header className="border-b bg-white dark:bg-zinc-950 px-6 py-5 z-10 shadow-sm shadow-slate-100/40 dark:shadow-none">
         <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between max-w-7xl mx-auto w-full">
           <div>
@@ -94,80 +95,89 @@ export default function MonthlyProcurementPage() {
               Monthly Procurement
             </h1>
             <p className="text-sm text-slate-500 dark:text-zinc-400 mt-0.5">
-              Create new procurement requests or review pending approvals
+              {canCreate && canApprove
+                ? "Create new procurement requests or review pending approvals"
+                : canCreate && canView
+                  ? "Create requests or view existing procurement approvals"
+                  : canCreate
+                    ? "Create and submit new procurement requests"
+                    : "Review and approve pending procurement requests"}
             </p>
           </div>
         </div>
       </header>
 
-      {/* Main Tab Wrapper Container */}
       <Tabs
         value={activeTab}
         onValueChange={(v) => setActiveTab(v as "create" | "approve")}
         className="flex-1 flex flex-col w-full"
       >
-        {/* Navigation Action Strip */}
-        <div className="border-b bg-white dark:bg-zinc-950 px-6 py-2.5">
-          <div className="max-w-7xl mx-auto w-full">
-            <TabsList className="grid w-full max-w-sm grid-cols-2 bg-slate-100 dark:bg-zinc-800 p-1 rounded-lg">
-              <TabsTrigger
-                value="create"
-                className="flex items-center justify-center gap-2 text-sm font-medium transition-none"
-              >
-                <FileUp className="w-4 h-4 opacity-70" />
-                Create Request
-              </TabsTrigger>
-              <TabsTrigger
-                value="approve"
-                className="flex items-center justify-center gap-2 text-sm font-medium transition-none"
-              >
-                <ClipboardList className="w-4 h-4 opacity-70" />
-                Approve Requests
-              </TabsTrigger>
-            </TabsList>
-          </div>
-        </div>
-
-        <TabsContent
-          value="create"
-          className="flex-1 mt-0 outline-none focus-visible:ring-0"
-        >
-          <main className="p-6 max-w-7xl mx-auto w-full">
-            <div className="bg-white dark:bg-zinc-950 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm p-6">
-              <ProcurementForm
-                type="monthly"
-                onSubmit={handleSubmit}
-                isSubmitting={isSubmitting}
-                items={items}
-                onAddItem={handleAddItem}
-                onRemoveItem={handleRemoveItem}
-              />
+        {/* Only show tab strip if user can see both tabs */}
+        {canCreate && (canApprove || canView) && (
+          <div className="border-b bg-white dark:bg-zinc-950 px-6 py-2.5">
+            <div className="max-w-7xl mx-auto w-full">
+              <TabsList className="grid w-full max-w-sm grid-cols-2 bg-slate-100 dark:bg-zinc-800 p-1 rounded-lg">
+                <TabsTrigger
+                  value="create"
+                  className="flex items-center justify-center gap-2 text-sm font-medium transition-none"
+                >
+                  <FileUp className="w-4 h-4 opacity-70" />
+                  Create Request
+                </TabsTrigger>
+                <TabsTrigger
+                  value="approve"
+                  className="flex items-center justify-center gap-2 text-sm font-medium transition-none"
+                >
+                  <ClipboardList className="w-4 h-4 opacity-70" />
+                  {canView ? "View Approvals" : "Approve Requests"}
+                </TabsTrigger>
+              </TabsList>
             </div>
-          </main>
-        </TabsContent>
-
-        <TabsContent
-          value="approve"
-          className="flex-1 mt-0 outline-none focus-visible:ring-0"
-        >
-          <div className="flex min-h-125 border-b border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
-            <aside className="w-80 md:w-96 shrink-0 border-r border-slate-200 dark:border-zinc-800 h-full overflow-y-auto bg-slate-50/50 dark:bg-zinc-900/10">
-              <MPList
-                onSelect={setSelectedId}
-                selectedId={selectedId}
-                key={listKey}
-              />
-            </aside>
-
-            {/* Selected Focus Detail Workspace */}
-            <main className="flex-1 h-full overflow-y-auto bg-white dark:bg-zinc-950">
-              <MPDetail
-                procurementId={selectedId}
-                onStatusChange={handleStatusChange}
-              />
-            </main>
           </div>
-        </TabsContent>
+        )}
+
+        {canCreate && (
+          <TabsContent
+            value="create"
+            className="flex-1 mt-0 outline-none focus-visible:ring-0"
+          >
+            <main className="p-6 max-w-7xl mx-auto w-full">
+              <div className="bg-white dark:bg-zinc-950 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm p-6">
+                <ProcurementForm
+                  type="monthly"
+                  onSubmit={handleSubmit}
+                  isSubmitting={isSubmitting}
+                  items={items}
+                  onAddItem={handleAddItem}
+                  onRemoveItem={handleRemoveItem}
+                />
+              </div>
+            </main>
+          </TabsContent>
+        )}
+
+        {(canApprove || canView) && (
+          <TabsContent
+            value="approve"
+            className="flex-1 mt-0 outline-none focus-visible:ring-0"
+          >
+            <div className="flex min-h-125 border-b border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+              <aside className="w-80 md:w-96 shrink-0 border-r border-slate-200 dark:border-zinc-800 h-full overflow-y-auto bg-slate-50/50 dark:bg-zinc-900/10">
+                <MPList
+                  onSelect={setSelectedId}
+                  selectedId={selectedId}
+                  key={listKey}
+                />
+              </aside>
+              <main className="flex-1 h-full overflow-y-auto bg-white dark:bg-zinc-950">
+                <MPDetail
+                  procurementId={selectedId}
+                  onStatusChange={handleStatusChange}
+                />
+              </main>
+            </div>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

@@ -1,6 +1,4 @@
-// context/AuthContext.tsx
 "use client";
-
 import {
   createContext,
   useContext,
@@ -15,12 +13,13 @@ import {
   isAuthenticated,
   clearAuthData,
 } from "@/lib/auth";
+import type { UserRole } from "@/types/user";
 
 interface User {
   id: string;
   email: string;
   name: string;
-  role: string;
+  role: UserRole;
 }
 
 interface AuthContextType {
@@ -31,27 +30,31 @@ interface AuthContextType {
   isAuthenticated: boolean;
 }
 
-// Role constants
 export const ROLES = {
-  ADMIN: "Admin",
-  GENERAL_AFFAIRS: "GeneralAffairs",
-  FINANCE: "Finance",
-} as const;
+  ADMIN: 1,
+  GA: 2,
+  FINANCE: 3,
+} as const satisfies Record<string, UserRole>;
 
-// Role helper functions
+const ROLE_MAP: Record<string, UserRole> = {
+  Admin: 1,
+  "General Affairs": 2,
+  Finance: 3,
+};
+
 export function isAdmin(user: User | null): boolean {
   return user?.role === ROLES.ADMIN;
 }
 
 export function isGeneralAffairs(user: User | null): boolean {
-  return user?.role === ROLES.GENERAL_AFFAIRS;
+  return user?.role === ROLES.GA;
 }
 
 export function isFinance(user: User | null): boolean {
   return user?.role === ROLES.FINANCE;
 }
 
-export function hasRole(user: User | null, ...roles: string[]): boolean {
+export function hasRole(user: User | null, ...roles: UserRole[]): boolean {
   if (!user) return false;
   return roles.includes(user.role);
 }
@@ -67,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (isAuthenticated()) {
         try {
           const res = await getUserProfile();
-          setUser(res.data);
+          setUser({ ...res.data, role: ROLE_MAP[res.data.role] ?? 1 });
         } catch (error) {
           console.error("Failed to load user:", error);
           clearAuthData();
@@ -75,15 +78,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setIsLoading(false);
     };
-
     loadUser();
   }, []);
 
   const login = async (email: string, password: string) => {
-    const res = await apiLogin({ email, password });
-
+    await apiLogin({ email, password });
     const userRes = await getUserProfile();
-    setUser(userRes.data);
+    setUser({ ...userRes.data, role: ROLE_MAP[userRes.data.role] ?? 1 });
   };
 
   const logout = async () => {
@@ -117,6 +118,5 @@ export function useAuth() {
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
-
   return context;
 }

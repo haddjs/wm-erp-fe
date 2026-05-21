@@ -43,11 +43,12 @@ export default function MonthlyProcurementTable({
     if (!canApprove) return;
     setUpdating(item.id);
     try {
-      await updateProcurementItemStatus(item.id, "purchased");
+      const newStatus = canEdit ? "purchased" : "completed";
+      await updateProcurementItemStatus(item.id, newStatus);
       onRefresh?.();
     } catch (error) {
-      console.error("Failed to approve item:", error);
-      alert("Failed to approve item. Please try again.");
+      console.error("Failed to update item status:", error);
+      alert("Failed to update item status. Please try again.");
     } finally {
       setUpdating(null);
     }
@@ -181,24 +182,23 @@ export default function MonthlyProcurementTable({
                     {getStatusDisplay(item.status)}
                   </td>
                   <td className="px-4 py-4 text-right whitespace-nowrap">
-                    {item.status === "pending" && (
+                    {item.status === "pending" && canEdit && (
                       <div className="flex items-center justify-end gap-2">
                         <Button
                           onClick={() => setRejectTarget(item)}
-                          disabled={updating === item.id || !canApprove}
+                          disabled={updating === item.id}
                           variant="outline"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950 rounded-lg text-xs font-semibold shadow-sm transition-colors disabled:opacity-50"
+                          className="... border-red-200 text-red-600 ..."
                         >
-                          <XCircle size={13} />
-                          Reject
+                          <XCircle size={13} /> Reject
                         </Button>
                         <Button
                           onClick={() => handleApprove(item)}
-                          disabled={updating === item.id || !canApprove}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border-green-200 hover:bg-slate-800 text-green-700 dark:bg-zinc-50 dark:hover:bg-zinc-200 dark:text-zinc-950 rounded-lg text-xs font-semibold shadow-sm transition-colors disabled:opacity-50"
+                          disabled={updating === item.id}
+                          className="... text-green-700 ..."
                         >
-                          <CheckIcon size={13} className="stroke-[2.5]" />
-                          {updating === item.id ? "..." : "Approve"}
+                          <CheckIcon size={13} />
+                          {updating === item.id ? "..." : "Mark Purchased"}
                         </Button>
                       </div>
                     )}

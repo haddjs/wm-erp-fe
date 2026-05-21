@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { openFileWithAuth, getFileById } from "@/lib/file";
 import {
   getPurchaseRecordsByItemId,
   updatePurchaseRecordStatus,
@@ -17,6 +18,7 @@ import {
   User,
   FileText,
   CreditCard,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,8 +52,11 @@ export default function PurchaseRecordReview({
   );
   const [migrating, setMigrating] = useState(false);
   const [migrateName, setMigrateName] = useState("");
+  const [openingFile, setOpeningFile] = useState<string | null>(null);
+  const [filePaths, setFilePaths] = useState<Record<string, string>>({});
 
-  const canReview = user?.role === "Admin" || user?.role === "Finance";
+  const canReview = user?.role === 1 || user?.role === 2 || user?.role === 3;
+  const canMove = user?.role === 1 || user?.role === 2;
 
   useEffect(() => {
     fetchRecords();
@@ -184,6 +189,13 @@ export default function PurchaseRecordReview({
                   <span className="text-xs text-gray-400">
                     #{record.id.slice(-6)}
                   </span>
+
+                  {record.is_flagged && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 border border-amber-200/50">
+                      <AlertTriangle size={10} />
+                      FLAGGED
+                    </span>
+                  )}
                 </div>
                 <p className="text-lg font-bold font-mono text-slate-900 dark:text-zinc-100">
                   Rp {record.actual_total_price.toLocaleString("id-ID")}
@@ -191,44 +203,64 @@ export default function PurchaseRecordReview({
               </div>
 
               {/* Action buttons — only for submitted records */}
-              {canReview && record.status === "submitted" && (
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-red-600 border-red-200 hover:bg-red-50 text-xs"
-                    disabled={updating === record.id}
-                    onClick={() => setRejectTarget(record)}
-                  >
-                    <XCircle size={13} className="mr-1" />
-                    Reject
-                  </Button>
-                  <Button
-                    size="sm"
-                    disabled={updating === record.id}
-                    onClick={() => handleConfirm(record)}
-                    className="text-xs"
-                  >
-                    <CheckCircle size={13} className="mr-1" />
-                    {updating === record.id ? "Processing..." : "Confirm"}
-                  </Button>
+              <div className="flex flex-col gap-4">
+                <div className="flex gap-4 justify-between">
+                  {canReview && record.status === "submitted" && (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-red-600 border-red-200 hover:bg-red-50 text-xs"
+                        disabled={updating === record.id}
+                        onClick={() => setRejectTarget(record)}
+                      >
+                        <XCircle size={13} className="mr-1" />
+                        Reject
+                      </Button>
+                      <Button
+                        size="sm"
+                        disabled={updating === record.id}
+                        onClick={() => handleConfirm(record)}
+                        className="text-xs"
+                      >
+                        <CheckCircle size={13} className="mr-1" />
+                        {updating === record.id ? "Processing..." : "Confirm"}
+                      </Button>
+                    </div>
+                  )}
                 </div>
-              )}
 
-              {record.status === "confirmed" && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-amber-600 border-amber-200 hover:bg-amber-50 text-xs"
-                  onClick={() => {
-                    setMigrateTarget(record);
-                    setMigrateName(record.notes || "");
-                  }}
-                >
-                  <CreditCard size={13} className="mr-1" />
-                  Move to Expense
-                </Button>
-              )}
+                <div className="flex gap-4">
+                  {(record.status === "submitted" ||
+                    record.status === "rejected") &&
+                    canMove && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-amber-600 border-amber-200 hover:bg-amber-50 text-xs"
+                        onClick={() => {
+                          setMigrateTarget(record);
+                          setMigrateName(record.notes || "");
+                        }}
+                      >
+                        <CreditCard size={13} className="mr-1" />
+                        Move to Expense
+                      </Button>
+                    )}
+
+                  {/* {record.file_id && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-6 text-[11px] text-blue-600 border-blue-200 hover:bg-blue-50"
+                      onClick={() => openFileWithAuth(filePath!)}
+                    >
+                      <FileText size={10} className="mr-1" /> View Invoice
+                    </Button>
+                  )} */}
+                </div>
+              </div>
             </div>
 
             {/* Details grid */}

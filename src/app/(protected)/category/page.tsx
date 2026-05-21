@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useAuth, ROLES } from "@/context/AuthContext";
 import {
   getCategories,
   createCategory,
@@ -8,7 +9,6 @@ import {
   deleteCategory,
 } from "@/lib/category";
 import type { Category } from "@/types/category";
-import { useAuth } from "@/context/AuthContext";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 
 // Shadcn UI Imports
@@ -37,15 +37,7 @@ export default function CategoriesPage() {
     description: "",
   });
 
-  const isAdmin = user?.role === "Admin";
-
-  useEffect(() => {
-    if (isAdmin) {
-      fetchCategories();
-    } else {
-      setLoading(false);
-    }
-  }, [isAdmin]);
+  const canEdit = user?.role === ROLES.ADMIN;
 
   const fetchCategories = async () => {
     try {
@@ -114,19 +106,9 @@ export default function CategoriesPage() {
     }
   };
 
-  if (!isAdmin) {
-    return (
-      <div className="p-8">
-        <div className="bg-red-50 text-red-700 p-4 rounded-lg border border-red-200">
-          ⚠️ Access Denied
-          <p className="text-sm mt-1 text-red-600">
-            This page is only accessible by administrators. Your role:{" "}
-            {user?.role || "Unknown"}
-          </p>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   if (loading) {
     return (
@@ -145,13 +127,15 @@ export default function CategoriesPage() {
             Manage expense and income categories
           </p>
         </div>
-        <Button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add Category
-        </Button>
+        {canEdit && (
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Category
+          </Button>
+        )}
       </div>
 
       {categories.length > 0 && (
@@ -161,92 +145,95 @@ export default function CategoriesPage() {
               categories={categories}
               onEdit={openEditModal}
               onDelete={handleDelete}
+              canEdit={canEdit}
             />
           </div>
         </div>
       )}
 
       {/* Shadcn UI Dialog Form */}
-      <Dialog open={isModalOpen} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {editingCategory ? "Edit Category" : "Add New Category"}
-            </DialogTitle>
-            <DialogDescription>
-              {editingCategory
-                ? "Make changes to the category details here."
-                : "Fill out the fields below to create a new organization category."}
-            </DialogDescription>
-          </DialogHeader>
+      {canEdit && (
+        <Dialog open={isModalOpen} onOpenChange={handleOpenChange}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>
+                {editingCategory ? "Edit Category" : "Add New Category"}
+              </DialogTitle>
+              <DialogDescription>
+                {editingCategory
+                  ? "Make changes to the category details here."
+                  : "Fill out the fields below to create a new organization category."}
+              </DialogDescription>
+            </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-4 py-2">
-              <div className="space-y-1">
-                <Label htmlFor="category-name">
-                  Category Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="category-name"
-                  type="text"
-                  placeholder="e.g., Office Supplies, Equipment"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  required
-                />
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-4 py-2">
+                <div className="space-y-1">
+                  <Label htmlFor="category-name">
+                    Category Name <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="category-name"
+                    type="text"
+                    placeholder="e.g., Office Supplies, Equipment"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="category-code">Code</Label>
+                  <Input
+                    id="category-code"
+                    type="text"
+                    placeholder="e.g., OFF, EQP"
+                    value={formData.code}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        code: e.target.value.toUpperCase(),
+                      })
+                    }
+                    className="font-mono uppercase"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Short identifier code for this category
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="category-description">Description</Label>
+                  <Textarea
+                    id="category-description"
+                    placeholder="Brief description of this category"
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
+                    rows={3}
+                  />
+                </div>
               </div>
 
-              <div className="space-y-1">
-                <Label htmlFor="category-code">Code</Label>
-                <Input
-                  id="category-code"
-                  type="text"
-                  placeholder="e.g., OFF, EQP"
-                  value={formData.code}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      code: e.target.value.toUpperCase(),
-                    })
-                  }
-                  className="font-mono uppercase"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Short identifier code for this category
-                </p>
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="category-description">Description</Label>
-                <Textarea
-                  id="category-description"
-                  placeholder="Brief description of this category"
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  rows={3}
-                />
-              </div>
-            </div>
-
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleOpenChange(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit">
-                {editingCategory ? "Update" : "Create"} Category
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleOpenChange(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit">
+                  {editingCategory ? "Update" : "Create"} Category
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
@@ -255,10 +242,12 @@ function CategoryTable({
   categories,
   onEdit,
   onDelete,
+  canEdit,
 }: {
   categories: Category[];
   onEdit: (category: Category) => void;
   onDelete: (id: string) => void;
+  canEdit: boolean;
 }) {
   return (
     <table className="w-full">
@@ -273,9 +262,11 @@ function CategoryTable({
           <th className="p-4 text-left text-sm font-semibold text-gray-600">
             Description
           </th>
-          <th className="p-4 w-24 text-center text-sm font-semibold text-gray-600">
-            Actions
-          </th>
+          {canEdit && (
+            <th className="p-4 w-24 text-center text-sm font-semibold text-gray-600">
+              Actions
+            </th>
+          )}
         </tr>
       </thead>
       <tbody>
@@ -296,17 +287,19 @@ function CategoryTable({
             </td>
             <td className="p-4 text-gray-600">{category.description || "—"}</td>
             <td className="p-4 text-center">
-              <div className="flex justify-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onEdit(category)}
-                  className="text-blue-600 hover:text-blue-800 h-8 w-8"
-                  title="Edit"
-                >
-                  <Pencil className="w-4 h-4" />
-                </Button>
-              </div>
+              {canEdit && (
+                <div className="flex justify-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onEdit(category)}
+                    className="text-blue-600 hover:text-blue-800 h-8 w-8"
+                    title="Edit"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
             </td>
           </tr>
         ))}
