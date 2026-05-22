@@ -25,6 +25,8 @@ import type {
   DashboardMP,
   DashboardEP,
 } from "@/types/dashboard";
+import { getMonthlyProcurements } from "@/lib/monthly-procurement";
+import { getEventProcurements } from "@/lib/event-procurement";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -34,18 +36,17 @@ export default function DashboardPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<string>("");
   const [mpData, setMpData] = useState<MPDashboardResponse | null>(null);
   const [epData, setEpData] = useState<EPDashboardResponse | null>(null);
+  const [allEPs, setAllEPs] = useState<DashboardEP[]>([]);
 
   const canViewDashboard = hasRole(user, ROLES.ADMIN, ROLES.GA, ROLES.FINANCE);
 
   useEffect(() => {
     fetchBranches();
-    if (canViewDashboard) fetchDashboardData();
-    else setLoading(false);
-  }, [canViewDashboard]);
+  }, []);
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [selectedBranchId]);
+    if (canViewDashboard) fetchDashboardData();
+  }, [selectedBranchId, canViewDashboard]);
 
   const fetchBranches = async () => {
     try {
@@ -60,15 +61,91 @@ export default function DashboardPage() {
     setLoading(true);
     setSelectedPeriod("");
     try {
-      const params = selectedBranchId
-        ? { branch_id: selectedBranchId }
-        : undefined;
+      const branchList =
+        branches.length > 0
+          ? branches
+          : ((await getBranches(1, 100)).data ?? []);
+
+      const targetBranches = selectedBranchId
+        ? branchList.filter((b) => b.id === selectedBranchId)
+        : branchList;
+
+      // Summary from dashboard endpoints
       const [mp, ep] = await Promise.all([
-        getMPDashboard(params),
-        getEPDashboard(params),
+        getMPDashboard(selectedBranchId ? { branch_id: selectedBranchId } : {}),
+        getEPDashboard(selectedBranchId ? { branch_id: selectedBranchId } : {}),
       ]);
       setMpData(mp);
       setEpData(ep);
+
+      // Tables from list endpoints
+      const [mpList, epList] = await Promise.all([
+        getMonthlyProcurements({
+          branch_id: selectedBranchId || undefined,
+          page: 1,
+          limit: 100,
+        }),
+        getEventProcurements({
+          branch_id: selectedBranchId || undefined,
+          page: 1,
+          limit: 100,
+        }),
+      ]);
+
+      // Inject into mpData as monthly_procurements
+      setMpData((prev) => ({
+        ...(prev ?? { summary: { total_budget: 0, total_actual_spending: 0 } }),
+        monthly_procurements: (mpList ?? [])
+          .sort((a, b) => b.period.localeCompare(a.period))
+          .slice(0, 5)
+          .map((p) => ({
+            id: p.id,
+            period: p.period,
+            status: p.status,
+            total_nominal: p.total_nominal,
+            actual_spending: p.actual_spending ?? 0,
+            items: {
+              total: p.procurement_items?.length ?? 0,
+              pending:
+                p.procurement_items?.filter((i) => i.status === "pending")
+                  .length ?? 0,
+              purchased:
+                p.procurement_items?.filter((i) => i.status === "purchased")
+                  .length ?? 0,
+              completed:
+                p.procurement_items?.filter((i) => i.status === "completed")
+                  .length ?? 0,
+            },
+          })),
+      }));
+
+      setAllEPs(
+        (epList ?? [])
+          .sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+          )
+          .slice(0, 5)
+          .map((e) => ({
+            id: e.id,
+            name: e.name,
+            date: e.date,
+            status: e.status,
+            total_nominal: e.total_nominal,
+            actual_spending: e.actual_spending ?? 0,
+            items: {
+              total: e.procurement_items?.length ?? 0,
+              pending:
+                e.procurement_items?.filter((i) => i.status === "pending")
+                  .length ?? 0,
+              purchased:
+                e.procurement_items?.filter((i) => i.status === "purchased")
+                  .length ?? 0,
+              completed:
+                e.procurement_items?.filter((i) => i.status === "completed")
+                  .length ?? 0,
+            },
+          })),
+      );
     } catch {
       toast.error("Failed to load dashboard data");
     } finally {
@@ -402,23 +479,24 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {!epData?.event_procurement && epData?.summary ? (
+                {allEPs.length === 0 ? (
                   <tr>
                     <td
                       colSpan={6}
                       className="px-6 py-12 text-center text-gray-400"
                     >
-                      {selectedBranchId
-                        ? "No event procurements for this branch"
-                        : "Select a branch to view event procurement details"}
+                      No event procurements found
                     </td>
                   </tr>
-                ) : epData?.event_procurement ? (
-                  <EPRow
-                    ep={epData.event_procurement}
-                    getStatusColor={getStatusColor}
-                  />
-                ) : null}
+                ) : (
+                  allEPs.map((ep) => (
+                    <EPRow
+                      key={ep.id}
+                      ep={ep}
+                      getStatusColor={getStatusColor}
+                    />
+                  ))
+                )}
               </tbody>
             </table>
           </div>

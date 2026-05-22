@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { openFileWithAuth } from "@/lib/file";
 import {
   Table,
   TableBody,
@@ -27,7 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Pencil, Trash2, Eye } from "lucide-react";
+import { Pencil, Trash2, Eye, FileText, AlertTriangle } from "lucide-react";
 import { ExpenseResponse } from "@/types/expense";
 import ExpenseForm from "./expense-form";
 import ExpenseDetail from "./expense-detail";
@@ -43,6 +44,8 @@ type Props = {
 };
 
 const ExpenseTable = ({ expenses, onRefetch, canEdit = true }: Props) => {
+  const [openingFile, setOpeningFile] = useState<string | null>(null);
+  const [filePaths, setFilePaths] = useState<Record<string, string>>({});
   const [editTarget, setEditTarget] = useState<ExpenseResponse | null>(null);
   const [detailTarget, setDetailTarget] = useState<ExpenseResponse | null>(
     null,
@@ -92,16 +95,30 @@ const ExpenseTable = ({ expenses, onRefetch, canEdit = true }: Props) => {
   return (
     <>
       <div className="rounded-lg border border-gray-200 overflow-hidden">
-        <Table>
+        <Table className="w-full border-collapse">
           <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead>Name</TableHead>
-              <TableHead>Branch</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Nominal</TableHead>
-              <TableHead>Merchant</TableHead>
-              <TableHead>Recorded By</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+            <TableRow className="bg-gray-50 border-b border-gray-200">
+              <TableHead className="w-[30%] min-w-60 font-semibold text-gray-700">
+                Name
+              </TableHead>
+              <TableHead className="font-semibold text-gray-700">
+                Branch
+              </TableHead>
+              <TableHead className="font-semibold text-gray-700">
+                Date
+              </TableHead>
+              <TableHead className="font-semibold text-gray-700">
+                Nominal
+              </TableHead>
+              <TableHead className="font-semibold text-gray-700">
+                Merchant
+              </TableHead>
+              <TableHead className="w-[30%] min-w-60 font-semibold text-gray-700">
+                Recorded By
+              </TableHead>
+              <TableHead className="text-right font-semibold text-gray-700 w-40">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -109,63 +126,127 @@ const ExpenseTable = ({ expenses, onRefetch, canEdit = true }: Props) => {
               <TableRow>
                 <TableCell
                   colSpan={7}
-                  className="text-center py-12 text-gray-400"
+                  className="text-center py-12 text-gray-400 text-sm"
                 >
                   No expenses found
                 </TableCell>
               </TableRow>
             )}
             {expenses.map((exp) => (
-              <TableRow key={exp.id}>
-                <TableCell className="font-medium">{exp.name}</TableCell>
-                <TableCell className="font-medium">
+              <TableRow
+                key={exp.id}
+                className="hover:bg-gray-50/50 transition-colors border-b border-gray-100"
+              >
+                {/* Name Column */}
+                <TableCell className="py-3.5">
+                  <div className="flex flex-col gap-1 layout-stable">
+                    {/* Inline Name and Flag Layout */}
+                    <div className="flex items-center gap-2 w-72">
+                      <span
+                        className="font-medium text-sm text-gray-900 truncate block"
+                        title={exp.name}
+                      >
+                        {exp.name}
+                      </span>
+                      {exp.is_flagged && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 shrink-0 dynamic-badge">
+                          <AlertTriangle className="w-2.5 h-2.5" />
+                          FLAGGED
+                        </span>
+                      )}
+                    </div>
+                    {/* Subtext: Item details */}
+                    {exp.item_name && (
+                      <div
+                        className="text-xs text-gray-500 truncate max-w-xs"
+                        title={`${exp.item_code ?? ""} ${exp.item_name}`}
+                      >
+                        {exp.item_code && (
+                          <span className="font-mono bg-gray-100 px-1 py-0.5 rounded text-gray-600 mr-1.5 text-[11px]">
+                            {exp.item_code}
+                          </span>
+                        )}
+                        <span>{exp.item_name}</span>
+                      </div>
+                    )}
+                  </div>
+                </TableCell>
+
+                {/* Branch */}
+                <TableCell className="text-sm text-gray-600">
                   {exp.branch_id ? (
                     (branchMap[exp.branch_id] ?? (
-                      <span className="text-gray-400 text-xs">
+                      <span className="text-gray-400 font-mono text-xs bg-gray-50 px-1 py-0.5 rounded">
                         {exp.branch_id}
                       </span>
                     ))
                   ) : (
-                    <span className="text-gray-400">-</span>
+                    <span className="text-gray-300">—</span>
                   )}
                 </TableCell>
-                <TableCell>
+
+                {/* Date */}
+                <TableCell className="text-sm text-gray-600 whitespace-nowrap">
                   {new Date(exp.date).toLocaleDateString("id-ID", {
                     day: "numeric",
                     month: "short",
                     year: "numeric",
                   })}
                 </TableCell>
-                <TableCell className="font-semibold text-red-600">
+
+                {/* Nominal */}
+                <TableCell className="font-semibold text-red-600 text-sm font-mono whitespace-nowrap">
                   Rp {exp.nominal.toLocaleString("id-ID")}
                 </TableCell>
-                <TableCell>
-                  {exp.merchant ?? <span className="text-gray-400">—</span>}
+
+                {/* Merchant */}
+                <TableCell
+                  className="text-sm text-gray-600 truncate max-w-37.5"
+                  title={exp.merchant ?? ""}
+                >
+                  {exp.merchant ?? <span className="text-gray-300">—</span>}
                 </TableCell>
-                <TableCell>{exp.recorded_by}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
+
+                {/* Recorded By */}
+                <TableCell className="text-sm text-gray-600 whitespace-nowrap">
+                  <div className="flex items-center gap-2 w-32">
+                    <span className="text-sm text-gray-600 truncate block">
+                      {exp.recorded_by}
+                    </span>
+                  </div>
+                </TableCell>
+
+                {/* Actions */}
+                <TableCell className="text-right py-3.5">
+                  <div className="flex justify-end gap-0.5">
+                    {/* View Detail */}
                     <Button
                       size="icon"
                       variant="ghost"
+                      className="h-8 w-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                       onClick={() => setDetailTarget(exp)}
+                      title="View Detail"
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
+
                     {canEdit && (
                       <>
                         <Button
                           size="icon"
                           variant="ghost"
+                          className="h-8 w-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                           onClick={() => setEditTarget(exp)}
+                          title="Edit"
                         >
                           <Pencil className="w-4 h-4" />
                         </Button>
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="text-red-500 hover:text-red-700"
+                          className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
                           onClick={() => setDeleteTarget(exp)}
+                          title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>

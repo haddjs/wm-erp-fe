@@ -60,6 +60,7 @@ export default function BranchesPage() {
         await updateBranch(editingBranch.id, {
           name: formData.name,
           address: formData.address,
+          balance: formData.balance,
         });
       } else {
         await createBranch(formData);
@@ -287,13 +288,11 @@ export default function BranchesPage() {
                   />
                 </div>
 
-                {!editingBranch ? (
+                {editingBranch && (
                   <div className="space-y-1">
-                    <Label htmlFor="initial-balance">
-                      Initial Balance (Rp)
-                    </Label>
+                    <Label htmlFor="edit-balance">Balance (Rp)</Label>
                     <Input
-                      id="initial-balance"
+                      id="edit-balance"
                       type="number"
                       placeholder="0"
                       value={formData.balance || ""}
@@ -307,22 +306,7 @@ export default function BranchesPage() {
                       step="1000"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Balance will be automatically adjusted as expenses are
-                      recorded
-                    </p>
-                  </div>
-                ) : (
-                  <div className="bg-muted/50 rounded-lg p-3 border">
-                    <p className="text-xs text-muted-foreground font-medium uppercase mb-1">
-                      Current Balance
-                    </p>
-                    <p
-                      className={`text-base font-bold ${getBalanceStyle(editingBranch.balance)}`}
-                    >
-                      Rp {editingBranch.balance.toLocaleString("id-ID")}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Balance is managed automatically by expense transactions
+                      Manually adjust the branch balance if needed
                     </p>
                   </div>
                 )}

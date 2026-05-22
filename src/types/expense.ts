@@ -1,15 +1,17 @@
 export interface ExpenseResponse {
   id: string;
   recorded_by: string;
-  branch_id: string | null;
-  item_id: string | null;
-  file_id: string | null;
-  order_id: string | null;
+  branch_id?: string | null;
+  item_code?: string | null;
+  item_name?: string | null;
+  file_id?: string | null;
+  order_id?: string | null;
   name: string;
   date: string;
   amount: number;
   nominal: number;
-  merchant: string | null;
+  merchant?: string | null;
+  is_flagged: boolean;
 }
 
 export interface ExpenseListResponse {
