@@ -8,6 +8,7 @@ export interface MonthlyProcurement {
   period: string;
   status: "pending" | "approved" | "partial" | "rejected";
   total_nominal: number;
+  actual_spending?: number;
   created_at: string;
   updated_at: string;
   procurement_items?: ProcurementItem[];
