@@ -4,6 +4,7 @@ export interface ExpenseResponse {
   branch_id?: string | null;
   item_code?: string | null;
   item_name?: string | null;
+  item_id?: string | null;
   file_id?: string | null;
   order_id?: string | null;
   name: string;
