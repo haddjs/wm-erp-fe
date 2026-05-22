@@ -17,6 +17,7 @@ import { getBranches } from "@/lib/branch";
 import { getCategories } from "@/lib/category";
 import { getItems } from "@/lib/item";
 import { toast } from "sonner";
+import { v4 as uuidv4 } from "uuid";
 
 import type { Branch } from "@/types/branch";
 import type { Category } from "@/types/category";
@@ -137,7 +138,7 @@ export const ProcurementForm = ({
     }
 
     const newItem: ProcurementItem = {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       category_id: selectedCategoryId,
       category_name: category?.name,
       item_id: selectedItem.id,
