@@ -80,7 +80,6 @@ const ExpenseDetail = ({ expense, onMigrated }: Props) => {
         <Row label="Merchant" value={expense.merchant ?? "—"} />
         <Row label="Recorded By" value={expense.recorded_by} />
         <Row label="Branch ID" value={expense.branch_id ?? "—"} />
-        <Row label="Item ID" value={expense.item_id ?? "—"} />
         <Row label="Order ID" value={expense.order_id ?? "—"} />
         <Row label="File ID" value={expense.file_id ?? "—"} />
 
