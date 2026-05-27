@@ -184,25 +184,27 @@ export default function CategoriesPage() {
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <Label htmlFor="category-code">Code</Label>
-                  <Input
-                    id="category-code"
-                    type="text"
-                    placeholder="e.g., OFF, EQP"
-                    value={formData.code}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        code: e.target.value.toUpperCase(),
-                      })
-                    }
-                    className="font-mono uppercase"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Short identifier code for this category
-                  </p>
-                </div>
+                {!editingCategory && (
+                  <div className="space-y-1">
+                    <Label htmlFor="category-code">Code</Label>
+                    <Input
+                      id="category-code"
+                      type="text"
+                      placeholder="e.g., OFF, EQP"
+                      value={formData.code}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          code: e.target.value.toUpperCase(),
+                        })
+                      }
+                      className="font-mono uppercase"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Short identifier code for this category
+                    </p>
+                  </div>
+                )}
 
                 <div className="space-y-1">
                   <Label htmlFor="category-description">Description</Label>

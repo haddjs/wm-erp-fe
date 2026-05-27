@@ -7,6 +7,7 @@ import {
   rejectProcurementItem,
   deleteProcurementItem,
 } from "@/lib/procurement-items";
+import PurchaseRecordReview from "@/features/purchase-record/components/purchase-record-review";
 import type { ProcurementItem } from "@/types/monthly-procurement";
 import {
   CheckIcon,
@@ -17,7 +18,6 @@ import {
   Save,
   X,
 } from "lucide-react";
-import PurchaseRecordModal from "@/features/purchase-record/components/purchase-record-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -45,13 +45,14 @@ export default function ProcurementTable({
 }) {
   const [localItems, setLocalItems] = useState<ProcurementItem[]>(items);
   const [updating, setUpdating] = useState<string | null>(null);
-  const [showPurchaseModal, setShowPurchaseModal] =
-    useState<ProcurementItem | null>(null);
   const [rejectTarget, setRejectTarget] = useState<ProcurementItem | null>(
     null,
   );
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editQty, setEditQty] = useState<number>(0);
+  const [reviewTarget, setReviewTarget] = useState<ProcurementItem | null>(
+    null,
+  );
 
   useEffect(() => {
     setLocalItems(items);
@@ -149,12 +150,6 @@ export default function ProcurementTable({
         return (
           <span className="inline-flex items-center text-[10px] tracking-wide font-bold px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/50 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
             PURCHASED
-          </span>
-        );
-      case "completed":
-        return (
-          <span className="inline-flex items-center text-[10px] tracking-wide font-bold px-2.5 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200/50 dark:bg-sky-500/10 dark:text-sky-400 dark:border-sky-500/20">
-            COMPLETED
           </span>
         );
       case "rejected":
@@ -345,46 +340,14 @@ export default function ProcurementTable({
                           )}
                         </div>
                       ) : item.status === "purchased" ? (
-                        procurementStatus === "approved" ? (
-                          <Button
-                            onClick={() => setShowPurchaseModal(item)}
-                            variant="outline"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
-                          >
-                            <FileTextIcon
-                              size={13}
-                              className="text-slate-400"
-                            />
-                            Record Purchase
-                          </Button>
-                        ) : (
-                          <span className="text-xs text-slate-400 font-medium pr-2">
-                            Awaiting approval
-                          </span>
-                        )
-                      ) : item.status === "completed" ? (
-                        <div className="flex flex-col items-end gap-0.5 pr-2">
-                          <span className="text-xs text-slate-400 font-medium">
-                            Fulfilled
-                          </span>
-                          {item.completed_by && (
-                            <span className="text-[11px] text-slate-400 dark:text-zinc-500">
-                              by {item.completed_by}
-                            </span>
-                          )}
-                          {item.completed_at && (
-                            <span className="text-[11px] text-slate-400 dark:text-zinc-500">
-                              {new Date(item.completed_at).toLocaleDateString(
-                                "id-ID",
-                                {
-                                  day: "numeric",
-                                  month: "short",
-                                  year: "numeric",
-                                },
-                              )}
-                            </span>
-                          )}
-                        </div>
+                        <Button
+                          onClick={() => setReviewTarget(item)}
+                          variant="outline"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
+                        >
+                          <FileTextIcon size={13} className="text-slate-400" />
+                          View Records
+                        </Button>
                       ) : item.status === "rejected" ? (
                         <div className="flex items-center justify-end gap-2">
                           <span className="text-xs text-red-500 font-medium">
@@ -421,15 +384,28 @@ export default function ProcurementTable({
         </div>
       </div>
 
-      <PurchaseRecordModal
-        isOpen={!!showPurchaseModal}
-        onClose={() => setShowPurchaseModal(null)}
-        item={showPurchaseModal}
-        onSuccess={() => {
-          setShowPurchaseModal(null);
-          onRefresh?.();
+      <Dialog
+        open={!!reviewTarget}
+        onOpenChange={(open) => {
+          if (!open) setReviewTarget(null);
         }}
-      />
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Purchase Records</DialogTitle>
+            <p className="text-sm text-slate-500 mt-1">
+              {reviewTarget?.item_name || reviewTarget?.code}
+            </p>
+          </DialogHeader>
+          {reviewTarget && (
+            <PurchaseRecordReview
+              procurementItemId={reviewTarget.id}
+              onRefresh={onRefresh}
+              branchId={reviewTarget.branch_id}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Reject Dialog */}
       <Dialog

@@ -110,13 +110,7 @@ export default function PurchaseRecordDetail({
       case "purchased":
         return (
           <span className="inline-flex items-center text-[10px] font-bold px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/50">
-            APPROVED
-          </span>
-        );
-      case "completed":
-        return (
-          <span className="inline-flex items-center text-[10px] font-bold px-2.5 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200/50">
-            COMPLETED
+            PURCHASED
           </span>
         );
       case "rejected":
@@ -313,29 +307,26 @@ export default function PurchaseRecordDetail({
                         {getItemStatusBadge(item.status)}
                       </td>
                       <td className="px-4 py-4 text-right whitespace-nowrap">
-                        {item.status === "purchased" ||
-                          (item.status === "pending" && (
-                            <Button
-                              size="sm"
-                              onClick={() => setShowRecordModal(item)}
-                              className="inline-flex items-center gap-1.5 text-xs font-semibold"
-                            >
-                              <FileTextIcon size={13} />
-                              Record Purchase
-                            </Button>
-                          ))}
-                        {item.status === "completed" && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setReviewTarget(item)}
-                              className="inline-flex items-center gap-1.5 text-xs font-semibold"
-                            >
-                              <FileTextIcon size={13} />
-                              View Records
-                            </Button>
-                          </>
+                        {item.status === "pending" && (
+                          <Button
+                            size="sm"
+                            onClick={() => setShowRecordModal(item)}
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold"
+                          >
+                            <FileTextIcon size={13} />
+                            Record Purchase
+                          </Button>
+                        )}
+                        {item.status === "purchased" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setReviewTarget(item)}
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold"
+                          >
+                            <FileTextIcon size={13} />
+                            View Records
+                          </Button>
                         )}
                       </td>
                     </tr>

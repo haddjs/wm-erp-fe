@@ -103,18 +103,18 @@ export default function DashboardPage() {
             period: p.period,
             status: p.status,
             total_nominal: p.total_nominal,
-            actual_spending: p.actual_spending ?? 0,
+            actual_spending: p.actual_spending ?? 0, // will be 0 if not returned by list endpoint
             items: {
               total: p.procurement_items?.length ?? 0,
-              pending:
-                p.procurement_items?.filter((i) => i.status === "pending")
-                  .length ?? 0,
-              purchased:
-                p.procurement_items?.filter((i) => i.status === "purchased")
-                  .length ?? 0,
-              completed:
-                p.procurement_items?.filter((i) => i.status === "completed")
-                  .length ?? 0,
+              pending: (p.procurement_items ?? []).filter(
+                (i) => i.status === "pending",
+              ).length,
+              purchased: (p.procurement_items ?? []).filter(
+                (i) => i.status === "purchased",
+              ).length,
+              completed: (p.procurement_items ?? []).filter(
+                (i) => i.status === "completed",
+              ).length,
             },
           })),
       }));

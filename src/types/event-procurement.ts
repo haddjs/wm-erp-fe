@@ -11,7 +11,7 @@ export interface EventProcurement {
   date: string;
   status: "pending" | "approved" | "disburse" | "rejected";
   total_nominal: number;
-  actual_spending?: number;
+  actual_spending: number;
   created_at: string;
   updated_at: string;
   procurement_items?: ProcurementItem[];

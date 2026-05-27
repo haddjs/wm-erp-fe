@@ -124,8 +124,8 @@ export default function PurchaseRecordModal({
         notes: formData.notes || null,
         file_id: fileId ?? undefined,
       });
+      await fetchExistingRecords();
       onSuccess();
-      onClose();
     } catch (error) {
       console.error("Failed to create purchase record:", error);
       alert("Failed to create purchase record. Please try again.");

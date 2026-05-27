@@ -186,10 +186,6 @@ export default function PurchaseRecordReview({
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   {getStatusBadge(record.status)}
-                  <span className="text-xs text-gray-400">
-                    #{record.id.slice(-6)}
-                  </span>
-
                   {record.is_flagged && (
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 border border-amber-200/50">
                       <AlertTriangle size={10} />

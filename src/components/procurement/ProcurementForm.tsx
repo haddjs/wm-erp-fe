@@ -58,6 +58,7 @@ export const ProcurementForm = ({
   const [categories, setCategories] = useState<Category[]>([]);
   const [itemsList, setItemsList] = useState<ItemResponse[]>([]);
   const [branchId, setBranchId] = useState("");
+  const [optionsLoading, setOptionsLoading] = useState(false);
 
   // Monthly specific
   const [period, setPeriod] = useState(() => {
@@ -96,6 +97,7 @@ export const ProcurementForm = ({
   }, [selectedCategoryId, itemsList]);
 
   const fetchData = async () => {
+    setOptionsLoading(true);
     try {
       const [branchesData, categoriesData, itemsData] = await Promise.all([
         getBranches(),
@@ -108,6 +110,8 @@ export const ProcurementForm = ({
     } catch (error) {
       console.error("Failed to fetch data:", error);
       toast.error("Failed to load form data");
+    } finally {
+      setOptionsLoading(false);
     }
   };
 
@@ -222,12 +226,15 @@ export const ProcurementForm = ({
             <Select
               value={branchId}
               onValueChange={(value: string | null) => setBranchId(value || "")}
+              disabled={optionsLoading}
             >
               <SelectTrigger id="branch" className="w-full">
                 <SelectValue placeholder="Select branch">
-                  {branchId
-                    ? branches.find((b) => b.id === branchId)?.name
-                    : "Select branch"}
+                  {optionsLoading
+                    ? "Loading..."
+                    : branchId
+                      ? branches.find((b) => b.id === branchId)?.name
+                      : "Select branch"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -315,13 +322,16 @@ export const ProcurementForm = ({
               onValueChange={(value: string | null) =>
                 setSelectedCategoryId(value || "")
               }
+              disabled={optionsLoading}
             >
               <SelectTrigger className="w-full">
                 <SelectValue>
-                  {selectedCategoryId
-                    ? categories.find((cat) => cat.id === selectedCategoryId)
-                        ?.name
-                    : "Select category"}
+                  {optionsLoading
+                    ? "Loading..."
+                    : selectedCategoryId
+                      ? categories.find((c) => c.id === selectedCategoryId)
+                          ?.name
+                      : "Select category"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -344,13 +354,15 @@ export const ProcurementForm = ({
               onValueChange={(value: string | null) =>
                 setSelectedItemId(value || "")
               }
-              disabled={!selectedCategoryId}
+              disabled={!selectedCategoryId || optionsLoading}
             >
               <SelectTrigger className="w-full">
                 <SelectValue>
-                  {selectedItemId
-                    ? filteredItems.find((i) => i.id === selectedItemId)?.name
-                    : "Select Item"}
+                  {optionsLoading
+                    ? "Loading..."
+                    : selectedItemId
+                      ? filteredItems.find((i) => i.id === selectedItemId)?.name
+                      : "Select Item"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -447,7 +459,12 @@ export const ProcurementForm = ({
                 onChange={(e) => setNotes(e.target.value)}
                 className="flex-1"
               />
-              <Button type="button" onClick={handleAddItem} className="gap-1">
+              <Button
+                type="button"
+                onClick={handleAddItem}
+                className="gap-1"
+                disabled={optionsLoading}
+              >
                 <Plus size={16} />
                 Add Item
               </Button>

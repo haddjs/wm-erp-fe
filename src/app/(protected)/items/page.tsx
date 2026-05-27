@@ -4,7 +4,16 @@ import { useState, useEffect } from "react";
 import { getItems, createItem, updateItem, deleteItem } from "@/lib/item";
 import { useAuth, ROLES } from "@/context/AuthContext";
 import { getCategories } from "@/lib/category";
-import { Plus, Pencil, Search, Package, X } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Search,
+  Package,
+  X,
+  ChevronRight,
+  ChevronLeft,
+  ChevronDown,
+} from "lucide-react";
 import { toast } from "sonner";
 import type { ItemResponse } from "@/types/item";
 import type { Category } from "@/types/category";
@@ -46,8 +55,13 @@ export default function ItemsPage() {
     description: "",
     unit: "",
   });
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+    new Set(),
+  );
+  const [groupPages, setGroupPages] = useState<Record<string, number>>({});
 
   const canEdit = user?.role === ROLES.ADMIN;
+  const ITEMS_PER_PAGE = 7;
 
   const fetchData = async () => {
     try {
@@ -119,6 +133,20 @@ export default function ItemsPage() {
     });
   };
 
+  const toggleGroup = (categoryId: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      next.has(categoryId) ? next.delete(categoryId) : next.add(categoryId);
+      return next;
+    });
+  };
+
+  const getGroupPage = (categoryId: string) => groupPages[categoryId] ?? 1;
+
+  const setGroupPage = (categoryId: string, page: number) => {
+    setGroupPages((prev) => ({ ...prev, [categoryId]: page }));
+  };
+
   const openEditModal = (item: ItemResponse) => {
     setEditingItem(item);
     setFormData({
@@ -158,11 +186,7 @@ export default function ItemsPage() {
     .filter((group) => group.items.length > 0);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <LoadingSpinner fullPage />;
   }
 
   return (
@@ -190,12 +214,15 @@ export default function ItemsPage() {
             <Label className="mb-1.5 block">Category Filter</Label>
             <Select
               value={selectedCategory}
-              onValueChange={(value: string | null) =>
-                setSelectedCategory(value || "")
-              }
+              onValueChange={(value) => setSelectedCategory(value || "ALL")}
             >
               <SelectTrigger>
-                <SelectValue placeholder="All Categories" />
+                <SelectValue>
+                  {selectedCategory === "ALL"
+                    ? "All Categories"
+                    : (categories.find((c) => c.id === selectedCategory)
+                        ?.name ?? "All Categories")}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">All Categories</SelectItem>
@@ -234,89 +261,172 @@ export default function ItemsPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {(itemsByCategory ?? []).map((group) => (
-            <div
-              key={group.id}
-              className="bg-white rounded-lg border overflow-hidden shadow-sm"
-            >
-              <div className="bg-muted/40 px-6 py-3 border-b">
-                <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-                  <Package className="w-4 h-4 text-muted-foreground" />
-                  {group.name}
-                  <span className="text-sm font-normal text-muted-foreground ml-2">
-                    ({group.items.length} items)
-                  </span>
-                </h2>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted/20 border-b">
-                    <tr>
-                      <th className="p-3 text-left font-medium text-muted-foreground">
-                        Code
-                      </th>
-                      <th className="p-3 text-left font-medium text-muted-foreground">
-                        Name
-                      </th>
-                      <th className="p-3 text-left font-medium text-muted-foreground">
-                        Variant
-                      </th>
-                      <th className="p-3 text-left font-medium text-muted-foreground">
-                        Description
-                      </th>
-                      <th className="p-3 text-left font-medium text-muted-foreground">
-                        Unit
-                      </th>
-                      {canEdit && (
-                        <th className="p-3 text-center font-medium text-muted-foreground w-24">
-                          Actions
-                        </th>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(group ?? []).items.map((item) => (
-                      <tr
-                        key={item.id}
-                        className="border-b last:border-0 hover:bg-muted/20 transition-colors"
-                      >
-                        <td className="p-3 font-mono text-xs text-muted-foreground">
-                          {item.code}
-                        </td>
-                        <td className="p-3 font-medium text-foreground">
-                          {item.name}
-                        </td>
-                        <td className="p-3 font-medium text-foreground">
-                          {item.variant}
-                        </td>
-                        <td className="p-3 text-muted-foreground">
-                          {item.description || "-"}
-                        </td>
-                        <td className="p-3 text-muted-foreground">
-                          {item.unit || "-"}
-                        </td>
-                        {canEdit && (
-                          <td className="p-3 text-center">
-                            <div className="flex justify-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => openEditModal(item)}
-                                className="text-blue-600 hover:text-blue-800 h-8 w-8"
-                                title="Edit"
+          {itemsByCategory.map((group) => {
+            const isCollapsed = collapsedGroups.has(group.id);
+            const currentPage = getGroupPage(group.id);
+            const totalPages = Math.ceil(group.items.length / ITEMS_PER_PAGE);
+            const pagedItems = group.items.slice(
+              (currentPage - 1) * ITEMS_PER_PAGE,
+              currentPage * ITEMS_PER_PAGE,
+            );
+
+            return (
+              <div
+                key={group.id}
+                className="bg-white rounded-lg border overflow-hidden shadow-sm"
+              >
+                {/* Header — clickable to collapse */}
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.id)}
+                  className="w-full bg-muted/40 px-6 py-3 border-b flex items-center justify-between hover:bg-muted/60 transition-colors"
+                >
+                  <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+                    <Package className="w-4 h-4 text-muted-foreground" />
+                    {group.name}
+                    <span className="text-sm font-normal text-muted-foreground ml-2">
+                      ({group.items.length} items)
+                    </span>
+                  </h2>
+                  <ChevronDown
+                    className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${
+                      isCollapsed ? "-rotate-90" : ""
+                    }`}
+                  />
+                </button>
+
+                {/* Collapsible body */}
+                {!isCollapsed && (
+                  <>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-muted/20 border-b">
+                          <tr>
+                            <th className="p-3 text-left font-medium text-muted-foreground">
+                              Code
+                            </th>
+                            <th className="p-3 text-left font-medium text-muted-foreground">
+                              Name
+                            </th>
+                            <th className="p-3 text-left font-medium text-muted-foreground">
+                              Variant
+                            </th>
+                            <th className="p-3 text-left font-medium text-muted-foreground">
+                              Description
+                            </th>
+                            <th className="p-3 text-left font-medium text-muted-foreground">
+                              Unit
+                            </th>
+                            {canEdit && (
+                              <th className="p-3 text-center font-medium text-muted-foreground w-24">
+                                Actions
+                              </th>
+                            )}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pagedItems.map(
+                            (
+                              item, // ← pagedItems instead of group.items
+                            ) => (
+                              <tr
+                                key={item.id}
+                                className="border-b last:border-0 hover:bg-muted/20 transition-colors"
                               >
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                                <td className="p-3 font-mono text-xs text-muted-foreground">
+                                  {item.code}
+                                </td>
+                                <td className="p-3 font-medium text-foreground">
+                                  {item.name}
+                                </td>
+                                <td className="p-3 font-medium text-foreground">
+                                  {item.variant}
+                                </td>
+                                <td className="p-3 text-muted-foreground">
+                                  {item.description || "-"}
+                                </td>
+                                <td className="p-3 text-muted-foreground">
+                                  {item.unit || "-"}
+                                </td>
+                                {canEdit && (
+                                  <td className="p-3 text-center">
+                                    <div className="flex justify-center gap-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => openEditModal(item)}
+                                        className="text-blue-600 hover:text-blue-800 h-8 w-8"
+                                      >
+                                        <Pencil className="w-4 h-4" />
+                                      </Button>
+                                    </div>
+                                  </td>
+                                )}
+                              </tr>
+                            ),
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Pagination footer — only shown when needed */}
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-between px-6 py-3 border-t bg-muted/20 text-sm text-muted-foreground">
+                        <span>
+                          Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–
+                          {Math.min(
+                            currentPage * ITEMS_PER_PAGE,
+                            group.items.length,
+                          )}{" "}
+                          of {group.items.length}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            disabled={currentPage === 1}
+                            onClick={() =>
+                              setGroupPage(group.id, currentPage - 1)
+                            }
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </Button>
+                          {Array.from(
+                            { length: totalPages },
+                            (_, i) => i + 1,
+                          ).map((page) => (
+                            <Button
+                              key={page}
+                              variant={
+                                page === currentPage ? "default" : "ghost"
+                              }
+                              size="icon"
+                              className="h-7 w-7 text-xs"
+                              onClick={() => setGroupPage(group.id, page)}
+                            >
+                              {page}
+                            </Button>
+                          ))}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            disabled={currentPage === totalPages}
+                            onClick={() =>
+                              setGroupPage(group.id, currentPage + 1)
+                            }
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -435,9 +545,11 @@ export default function ItemsPage() {
   );
 }
 
-function LoadingSpinner() {
+function LoadingSpinner({ fullPage = false }: { fullPage?: boolean }) {
   return (
-    <div className="flex items-center justify-center py-12">
+    <div
+      className={`flex items-center justify-center ${fullPage ? "h-full" : "py-12"}`}
+    >
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
     </div>
   );
